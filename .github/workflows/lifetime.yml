@@ -8,8 +8,12 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
     steps:
-      - name: Install PowerShell
-        run: sudo apt-get install -y powershell
+      - name: Install PowerShell 7.5.2 Preview
+        run: |
+          wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.2-preview/powershell-7.5.2-preview-linux-x64.tar.gz
+          mkdir ~/powershell
+          tar -xvf ./powershell-7.5.2-preview-linux-x64.tar.gz -C ~/powershell
+          sudo ln -s ~/powershell/pwsh /usr/bin/pwsh
 
       - name: Checkout Repo
         uses: actions/checkout@v3
