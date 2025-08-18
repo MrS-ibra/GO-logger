@@ -60,7 +60,7 @@ try {
         $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $joinedToday = [int]$lastToday - [int]$firstToday
-        $summary = "A total of $joinedToday players have joined Generals Online today so far. 🎉"
+        $summary = "A total of $joinedToday players have joined Generals Online today."
         Add-Content -Path $logPath -Value $summary
         Write-Host $summary
     }
