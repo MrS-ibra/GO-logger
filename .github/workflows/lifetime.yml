@@ -27,8 +27,8 @@ jobs:
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
-          git add lifetime_log.txt
-          git commit -m "Update lifetime log"
+          git add lifetime_log.txt raw_dump.txt
+          git commit -m "Update lifetime log and raw HTML dump"
           git push
 
       - name: Send to Discord
