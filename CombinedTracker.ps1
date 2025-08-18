@@ -24,6 +24,7 @@ function GetPlayers {
 }
 
 try {
+    Write-Host "Fetching: $url"
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
     # Lifetime count
@@ -65,6 +66,6 @@ try {
 }
 catch {
     Write-Host "ERROR OCCURRED:"
-    Write-Host "$($_.Exception | Format-List -Force)"
+    Write-Host $_.Exception.Message
     exit 8
 }
