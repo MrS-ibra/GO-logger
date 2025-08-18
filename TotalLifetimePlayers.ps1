@@ -18,7 +18,7 @@ try {
     $line = "$timestamp — Total Lifetime Players: $count"
     Write-Host "📝 Log line: $line"
 
-    $logPath = "$PSScriptRoot/lifetime_log.txt"
+    $logPath = "$(Split-Path $MyInvocation.MyCommand.Path)/lifetime_log.txt"
     Write-Host "📁 Writing to: $logPath"
 
     Set-Content -Path $logPath -Value $line
