@@ -30,8 +30,7 @@ try {
     # Lifetime count
     $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
     $html = $response.Content
-    $countRaw = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count = [regex]::Match($countRaw, "\d+").Value
+    $count = [regex]::Match($html, "Total Lifetime Players:\s*(\d+)").Groups[1].Value
     $count = [int]$count
 
     $previousLine = if (Test-Path $log) {
