@@ -23,17 +23,12 @@ jobs:
       - name: Run Combined Tracker
         run: ~/powershell/pwsh "./CombinedTracker.ps1"
 
-      - name: Append Log into Repo
-        run: |
-          touch lifetime_log.txt
-          cat "$env:USERPROFILE/Documents/Command and Conquer Generals Zero Hour Data/GeneralsOnlineData/generals_players.log" >> lifetime_log.txt
-
       - name: Commit Log
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
           git add lifetime_log.txt
-          git commit -m "Update lifetime count and player list"
+          git commit -m "Update lifetime log"
           git push
 
       - name: Send to Discord
