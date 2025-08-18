@@ -1,31 +1,59 @@
-try {
-    Write-Host "Starting scrape..."
+$log = "$env:USERPROFILE\Documents\Command and Conquer Generals Zero Hour Data\GeneralsOnlineData\generals_players.log"
+$url = "https://www.playgenerals.online/players"
+$useEmoji = $true
 
-    $url = "https://www.playgenerals.online/players"
-    Write-Host "Requesting: $url"
-
-    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
-    Write-Host "Response received."
-
+function GetPlayers {
+    $response = Invoke-WebRequest -Uri $url -UseBasicParsing
     $html = $response.Content
-    Write-Host "HTML length: $($html.Length)"
 
+    $rows = ($html -split "<tr") | Where-Object { $_ -match "<td>" -or $_ -match "<th>" }
+
+    $names = @()
+    foreach ($row in $rows) {
+        $cells = ($row -split "<t[dh].*?>") | Select-Object -Skip 1
+        $decoded = $cells | ForEach-Object {
+            [System.Web.HttpUtility]::HtmlDecode(($_ -split "</t[dh]>")[0].Trim())
+        }
+        if ($decoded.Count -ge 1) {
+            $name = $decoded[0]
+            $names += $name
+        }
+    }
+
+    return $names
+}
+
+try {
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+    # Lifetime count
+    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
+    $html = $response.Content
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = [int]$count.Trim()
-    Write-Host "Extracted count: $count"
 
-    $logPath = "/tmp/lifetime_log.txt"
-    $previousLine = if (Test-Path $logPath) { Get-Content $logPath | Select-Object -Last 1 } else { "" }
+    $logPath = $log
+    $previousLine = if (Test-Path $logPath) { Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1 } else { "" }
     $previousCount = if ($previousLine -match "\d+$") { [int]($previousLine -replace "[^\d]+", "") } else { $count }
 
-    $marker = if ($count -gt $previousCount) { " ⬆️🔥" } else { "" }
+    $marker = if ($count -gt $previousCount) { " ⬆️📈🔥" } else { "" }
+    $header = "$timestamp — Total Lifetime Players: $count$marker"
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $line = "$timestamp — Total Lifetime Players: $count$marker"
-    Write-Host "Log line: $line"
+    Add-Content $logPath ""
+    Add-Content $logPath $header
+    Write-Host $header
 
-    Add-Content -Path $logPath -Value $line
-    Write-Host "Log file updated successfully."
+    # Player list
+    $players = GetPlayers
+    $players = $players | Sort-Object
+
+    for ($i = 0; $i -lt $players.Count; $i++) {
+        $line = "$($i + 1). $($players[$i])"
+        Add-Content $logPath $line
+        Write-Host $line
+    }
+
+    Write-Host "Log updated at: $logPath"
 }
 catch {
     Write-Host "ERROR OCCURRED:"
