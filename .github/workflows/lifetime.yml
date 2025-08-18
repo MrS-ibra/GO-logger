@@ -20,27 +20,27 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Run Tracker
-        run: ~/powershell/pwsh "./TotalLifetimePlayers.ps1"
+      - name: Run Combined Tracker
+        run: ~/powershell/pwsh "./CombinedTracker.ps1"
 
       - name: Append Log into Repo
         run: |
           touch lifetime_log.txt
-          cat /tmp/lifetime_log.txt >> lifetime_log.txt
+          cat "$env:USERPROFILE/Documents/Command and Conquer Generals Zero Hour Data/GeneralsOnlineData/generals_players.log" >> lifetime_log.txt
 
       - name: Commit Log
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
           git add lifetime_log.txt
-          git commit -m "Update lifetime count"
+          git commit -m "Update lifetime count and player list"
           git push
 
       - name: Send to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          last_line=$(tail -n 1 lifetime_log.txt)
+          last_line=$(grep "Total Lifetime Players:" lifetime_log.txt | tail -n 1)
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$last_line\"}" \
