@@ -19,8 +19,12 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
-    # Brute-force fallback for online player count
-    $online = ($html -split "Online Players:")[1] -split "[^0-9]" | Where-Object { $_ -match "^\d+$" } | Select-Object -First 1
+    # Precise extraction of online player count
+    $online = if ($html -match "There are (\d+) online player") {
+        $matches[1]
+    } else {
+        "?"
+    }
     Write-Host "Extracted online: $online"
 
     $logPath = "lifetime_log.txt"
