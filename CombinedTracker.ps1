@@ -30,8 +30,12 @@ try {
     # Lifetime count
     $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
     $html = $response.Content
-    $count = [regex]::Match($html, "Total Lifetime Players:\s*(\d+)").Groups[1].Value
-    $count = [int]$count
+    $match = [regex]::Match($html, "Total Lifetime Players:\s*(\d+)<")
+    if ($match.Success) {
+        $count = [int]$match.Groups[1].Value
+    } else {
+        throw "Lifetime player count not found in HTML."
+    }
 
     $previousLine = if (Test-Path $log) {
         Get-Content $log | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1
