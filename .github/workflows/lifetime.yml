@@ -13,4 +13,4 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Run Tracker
-        run: pwsh ./GOLifetimeCount.ps1
+        run: pwsh "./Total Lifetime Players.ps1"
