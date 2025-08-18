@@ -14,8 +14,10 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
-    $online = if ($html -match "Online Players:\s*(\d+)") {
-        $matches[1]
+    $onlineMatch = ($html -split "Online Players:")[1] -split "<" | Select-Object -First 1
+    $online = if ($onlineMatch -match "\d+") {
+        ($onlineMatch -match "\d+") | Out-Null
+        $matches[0]
     } else {
         "?"
     }
