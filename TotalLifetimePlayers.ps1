@@ -38,7 +38,7 @@ try {
         # Calculate today's total growth
         $today = Get-Date -Format "yyyy-MM-dd"
         $todayLines = Get-Content $logPath | Where-Object {
-            $_ -like "$today*" -and $_ -match "Total Lifetime Players:" -and $_ -match "—"
+            $_ -match "^$today\s+—\s+Total Lifetime Players:"
         }
 
         if ($todayLines.Count -ge 2) {
