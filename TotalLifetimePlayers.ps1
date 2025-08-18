@@ -23,14 +23,17 @@ try {
         $count
     }
 
-    $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈🔥" } else { "" }
-
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $line = "$timestamp — Total Lifetime Players: $count$marker"
-    Write-Host "Log line: $line"
-
-    Add-Content -Path $logPath -Value $line
-    Write-Host "Log file updated successfully."
+    if ([int]$count -gt [int]$previousCount) {
+        $marker = " ⬆️📈🔥"
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $line = "$timestamp — Total Lifetime Players: $count$marker"
+        Write-Host "Log line: $line"
+        Add-Content -Path $logPath -Value $line
+        Write-Host "Log file updated successfully."
+    }
+    else {
+        Write-Host "No increase detected. Skipping log."
+    }
 }
 catch {
     Write-Host "ERROR OCCURRED:"
