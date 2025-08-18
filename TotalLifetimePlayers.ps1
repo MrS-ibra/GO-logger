@@ -18,8 +18,9 @@ try {
     $line = "$timestamp — Total Lifetime Players: $count"
     Write-Host "📝 Log line: $line"
 
-    $repoRoot = "/home/runner/work/$env:GITHUB_REPOSITORY/$env:GITHUB_REPOSITORY"
-    $logPath = "$repoRoot/lifetime_log.txt"
+    # GitHub Actions repo path
+    $repoRoot = Join-Path $env:GITHUB_WORKSPACE ""
+    $logPath = Join-Path $repoRoot "lifetime_log.txt"
     Write-Host "📁 Writing to: $logPath"
 
     Set-Content -Path $logPath -Value $line
