@@ -2,18 +2,18 @@ name: Lifetime Tracker
 
 on:
   schedule:
-    - cron: '*/1 * * * *'  # Every 1 minute
-  workflow_dispatch:       # 👈 Enables manual trigger
+    - cron: '*/1 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
     steps:
-      - name: Install PowerShell 7.5.2 Preview
+      - name: Install PowerShell 7.4.1
         run: |
-          wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.2-preview/powershell-7.5.2-preview-linux-x64.tar.gz
+          wget https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell-7.4.1-linux-x64.tar.gz
           mkdir ~/powershell
-          tar -xvf ./powershell-7.5.2-preview-linux-x64.tar.gz -C ~/powershell
+          tar -xvf ./powershell-7.4.1-linux-x64.tar.gz -C ~/powershell
           sudo ln -s ~/powershell/pwsh /usr/bin/pwsh
 
       - name: Checkout Repo
