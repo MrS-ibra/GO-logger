@@ -14,8 +14,11 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
-    $online = ($html -split "Online Players:")[1] -split "<" | Select-Object -First 1
-    $online = $online.Trim()
+    $online = if ($html -match "Online Players:\s*(\d+)") {
+        $matches[1]
+    } else {
+        "?"
+    }
     Write-Host "Extracted online: $online"
 
     $logPath = "lifetime_log.txt"
