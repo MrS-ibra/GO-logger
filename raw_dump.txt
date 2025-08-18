@@ -101,8 +101,8 @@ $('#return-to-top').click(function() {      // When arrow is clicked
 
             <ul class="navbar-nav" style="margin-right: 100px;">
       
-                <li class="nav-item"><a class="nav-link" href="/matches">Lobbies <span class="badge text-bg-secondary">9</span></a></li>
-                <li class="nav-item"><a class="nav-link" href="/players">Players <span class="badge text-bg-secondary">32</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="/matches">Lobbies <span class="badge text-bg-secondary">7</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="/players">Players <span class="badge text-bg-secondary">26</span></a></li>
                 <li class="nav-item"><a class="nav-link" href="/faq">FAQ</span></a></li>
                
                 <li class="nav-item"><a class="nav-link" href="/bugs">BugTracker</span></a></li>
@@ -189,7 +189,7 @@ function ConsumeNotificationWithoutRedirect($notification_id)
     <h1><font class='logo_pt1_color'>Active</font><font class='logo_pt2_color'>Players</font></h1>
     <br />
 
-    <center><h3>There are 32 online player(s).</h3></center><center><h4>Total Lifetime Players: 2261.</h4></center><div class="container-sm"><table class="table">
+    <center><h3>There are 26 online player(s).</h3></center><center><h4>Total Lifetime Players: 2261.</h4></center><div class="container-sm"><table class="table">
   <thead>
     <tr>
       <th scope="col">Name</th>
@@ -199,165 +199,135 @@ function ConsumeNotificationWithoutRedirect($notification_id)
     </tr>
   </thead>
   <tbody><tr>
-      <th scope='row'>erdemkzroglu1</th>
-      <td>In lobby &#039;cekmekoy&#039; -  Match In Progress</td>
-      <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 18 minutes, 4 seconds</td>
+      <th scope='row'>Leotardo</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; - Waiting on game setup</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 11 minutes, 38 seconds</td>
     </tr><tr>
       <th scope='row'>SerAph</th>
-      <td>In lobby &#039;Generals Online Lobby&#039; - Waiting on game setup</td>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 23 minutes, 16 seconds</td>
+      <td>Playing for 45 minutes, 14 seconds</td>
     </tr><tr>
       <th scope='row'>bjorn</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 6 minutes, 45 seconds</td>
+      <td>Playing for 28 minutes, 43 seconds</td>
     </tr><tr>
       <th scope='row'>Sherryge</th>
       <td>In lobby &#039;defcon without carnage&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 13 minutes, 17 seconds</td>
+      <td>Playing for 35 minutes, 15 seconds</td>
     </tr><tr>
       <th scope='row'>Firass01</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 17 minutes, 2 seconds</td>
+      <td>Playing for 39 minutes, 0 seconds</td>
     </tr><tr>
       <th scope='row'>Kill toll^</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 1 minutes, 17 seconds</td>
+      <td>Playing for 23 minutes, 15 seconds</td>
     </tr><tr>
       <th scope='row'>Jhon Reese</th>
       <td>In lobby &#039;defcon without carnage&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 1 hours, 31 minutes, 49 seconds</td>
+      <td>Playing for 1 hours, 53 minutes, 47 seconds</td>
     </tr><tr>
       <th scope='row'>H&uuml;leyza</th>
       <td>In lobby &#039;defcon without carnage&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 4 minutes, 17 seconds</td>
+      <td>Playing for 26 minutes, 15 seconds</td>
     </tr><tr>
       <th scope='row'>-Strider</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 12 minutes, 10 seconds</td>
+      <td>Playing for 34 minutes, 8 seconds</td>
     </tr><tr>
       <th scope='row'>palamer93</th>
       <td>In lobby &#039;GNS&#039; -  Match In Progress</td>
       <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 41 minutes, 39 seconds</td>
-    </tr><tr>
-      <th scope='row'>MetroArcher</th>
-      <td>In lobby &#039;coop mission HARD&#039; -  Match In Progress</td>
-      <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 27 minutes, 33 seconds</td>
+      <td>Playing for 1 hours, 3 minutes, 37 seconds</td>
     </tr><tr>
       <th scope='row'>Ab Jbril</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 38 minutes, 26 seconds</td>
-    </tr><tr>
-      <th scope='row'>Birgariban</th>
-      <td>In lobby &#039;cekmekoy&#039; -  Match In Progress</td>
-      <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 40 minutes, 39 seconds</td>
+      <td>Playing for 1 hours, 24 seconds</td>
     </tr><tr>
       <th scope='row'>Don Haoss</th>
       <td>In Server List / Chat Room</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 14 seconds</td>
-    </tr><tr>
-      <th scope='row'>[A]dmiral El-PeJte</th>
-      <td>In lobby &#039;Generals Online Lobby&#039; - Waiting on game setup</td>
-      <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 7 seconds</td>
+      <td>Playing for 22 minutes, 12 seconds</td>
     </tr><tr>
       <th scope='row'>abu3li1995</th>
       <td>In lobby &#039;GNS&#039; -  Match In Progress</td>
       <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 39 minutes, 24 seconds</td>
+      <td>Playing for 1 hours, 1 minutes, 22 seconds</td>
     </tr><tr>
       <th scope='row'>muff</th>
-      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>In Server List / Chat Room</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 1 minutes, 1 seconds</td>
+      <td>Playing for 22 minutes, 59 seconds</td>
     </tr><tr>
       <th scope='row'>PrimeH0pe</th>
       <td>In lobby &#039;defcon without carnage&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 4 minutes, 18 seconds</td>
+      <td>Playing for 26 minutes, 16 seconds</td>
     </tr><tr>
       <th scope='row'>ProfessorX</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 14 minutes, 22 seconds</td>
+      <td>Playing for 36 minutes, 20 seconds</td>
     </tr><tr>
       <th scope='row'>_SUSKY_</th>
-      <td>In lobby &#039;Generals Online Lobby&#039; - Waiting on game setup</td>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 14 minutes, 30 seconds</td>
+      <td>Playing for 36 minutes, 27 seconds</td>
     </tr><tr>
       <th scope='row'>Carnage</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 5 minutes, 15 seconds</td>
-    </tr><tr>
-      <th scope='row'>H0mdi</th>
-      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
-      <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 7 minutes, 59 seconds</td>
+      <td>Playing for 27 minutes, 13 seconds</td>
     </tr><tr>
       <th scope='row'>WexleR</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 1 minutes, 17 seconds</td>
+      <td>Playing for 23 minutes, 15 seconds</td>
     </tr><tr>
       <th scope='row'>Chikimaw</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 1 hours, 9 seconds</td>
-    </tr><tr>
-      <th scope='row'>MERKO</th>
-      <td>In lobby &#039;WE HAVE SERVER ERORR&#039; - Waiting on game setup</td>
-      <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 2 minutes, 12 seconds</td>
+      <td>Playing for 1 hours, 22 minutes, 7 seconds</td>
     </tr><tr>
       <th scope='row'>zxz</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 58 minutes, 38 seconds</td>
-    </tr><tr>
-      <th scope='row'>Reysei</th>
-      <td>In lobby &#039;cekmekoy&#039; -  Match In Progress</td>
-      <td>GeneralsOnline 30Hz</td>
-      <td>Playing for 41 minutes, 23 seconds</td>
+      <td>Playing for 1 hours, 20 minutes, 35 seconds</td>
     </tr><tr>
       <th scope='row'>espiranza makrem</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 12 minutes, 55 seconds</td>
+      <td>Playing for 34 minutes, 52 seconds</td>
     </tr><tr>
       <th scope='row'>Aaaaaarb</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 37 minutes, 40 seconds</td>
+      <td>Playing for 59 minutes, 38 seconds</td>
     </tr><tr>
       <th scope='row'>BlackBox217</th>
       <td>In lobby &#039;defcon without carnage&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 4 minutes, 7 seconds</td>
+      <td>Playing for 26 minutes, 4 seconds</td>
     </tr><tr>
       <th scope='row'>warriorimhef</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 1 hours, 9 minutes, 3 seconds</td>
+      <td>Playing for 1 hours, 31 minutes, 1 seconds</td>
     </tr><tr>
       <th scope='row'>koz963</th>
       <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
       <td>GeneralsOnline 60Hz</td>
-      <td>Playing for 39 minutes, 19 seconds</td>
+      <td>Playing for 1 hours, 1 minutes, 17 seconds</td>
     </tr></tbody></table></div>    
     </div>
     </div>
