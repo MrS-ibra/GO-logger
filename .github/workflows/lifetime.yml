@@ -3,6 +3,7 @@ name: Lifetime Tracker
 on:
   schedule:
     - cron: '*/1 * * * *'  # Every 1 minute
+  workflow_dispatch:       # 👈 Enables manual trigger
 
 jobs:
   run-script:
