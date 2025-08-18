@@ -14,6 +14,10 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
+    $online = ($html -split "Online Players:")[1] -split "<" | Select-Object -First 1
+    $online = $online.Trim()
+    Write-Host "Extracted online: $online"
+
     $logPath = "lifetime_log.txt"
     $previousLine = if (Test-Path $logPath) {
         Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" -and $_ -match "—" } | Select-Object -Last 1
@@ -30,8 +34,11 @@ try {
     $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈" } else { "" }
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $line = "$timestamp  —  Total Lifetime Players: $count$marker"
+    $onlineLine = "There are $online online players now. 🎮"
+
     Write-Host "Log line: $line"
     Add-Content -Path $logPath -Value $line
+    Add-Content -Path $logPath -Value $onlineLine
     Write-Host "Log file updated successfully."
 
     # Calculate today's total growth
