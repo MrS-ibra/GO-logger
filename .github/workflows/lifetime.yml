@@ -17,17 +17,16 @@ jobs:
 
       - name: Checkout Repo
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}  # ✅ Use your token during checkout
 
       - name: Run Tracker
         run: ~/powershell/pwsh "./TotalLifetimePlayers.ps1"
 
       - name: Commit Log
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
           git add lifetime_log.txt
           git commit -m "Update lifetime count"
           git push
