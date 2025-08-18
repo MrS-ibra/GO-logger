@@ -10,6 +10,10 @@ try {
     $html = $response.Content
     Write-Host "HTML length: $($html.Length)"
 
+    # Dump raw HTML for inspection (overwrites each run)
+    $html | Out-File -FilePath "raw_dump.txt"
+    Write-Host "Raw HTML dumped to raw_dump.txt"
+
     # Extract lifetime player count
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim()
