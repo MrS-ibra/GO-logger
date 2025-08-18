@@ -11,14 +11,19 @@ try {
     Write-Host "HTML length: $($html.Length)"
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count = [int]$count.Trim()
+    $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
     $logPath = "lifetime_log.txt"
-    $previousLine = if (Test-Path $logPath) { Get-Content $logPath | Select-Object -Last 1 } else { "" }
-    $previousCount = if ($previousLine -match "\d+$") { [int]($previousLine -replace "[^\d]+", "") } else { $count }
+    $previousLine = if (Test-Path $logPath) { Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1 } else { "" }
 
-    $marker = if ($count -gt $previousCount) { " ⬆️📈🔥" } else { "" }
+    $previousCount = if ($previousLine -match "Total Lifetime Players:") {
+        ($previousLine -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
+    } else {
+        $count
+    }
+
+    $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈🔥" } else { "" }
 
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $line = "$timestamp — Total Lifetime Players: $count$marker"
