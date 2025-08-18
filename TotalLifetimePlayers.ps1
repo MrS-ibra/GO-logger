@@ -15,7 +15,11 @@ try {
     Write-Host "Extracted count: $count"
 
     $logPath = "lifetime_log.txt"
-    $previousLine = if (Test-Path $logPath) { Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1 } else { "" }
+    $previousLine = if (Test-Path $logPath) {
+        Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" -and $_ -match "—" } | Select-Object -Last 1
+    } else {
+        ""
+    }
 
     $previousCount = if ($previousLine -match "Total Lifetime Players:") {
         ($previousLine -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
@@ -33,7 +37,9 @@ try {
 
         # Calculate today's total growth
         $today = Get-Date -Format "yyyy-MM-dd"
-        $todayLines = Get-Content $logPath | Where-Object { $_ -like "$today*" -and $_ -match "Total Lifetime Players:" }
+        $todayLines = Get-Content $logPath | Where-Object {
+            $_ -like "$today*" -and $_ -match "Total Lifetime Players:" -and $_ -match "—"
+        }
 
         if ($todayLines.Count -ge 2) {
             $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
