@@ -10,17 +10,17 @@ try {
     $html = $response.Content
     Write-Host "HTML length: $($html.Length)"
 
+    # Dump raw HTML for inspection
+    $html | Out-File -FilePath "raw_dump.txt"
+    Write-Host "Raw HTML dumped to raw_dump.txt"
+
+    # Extract lifetime player count
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
-    $onlineMatch = ($html -split "Online Players:")[1] -split "<" | Select-Object -First 1
-    $online = if ($onlineMatch -match "\d+") {
-        ($onlineMatch -match "\d+") | Out-Null
-        $matches[0]
-    } else {
-        "?"
-    }
+    # Brute-force fallback for online player count
+    $online = ($html -split "Online Players:")[1] -split "[^0-9]" | Where-Object { $_ -match "^\d+$" } | Select-Object -First 1
     Write-Host "Extracted online: $online"
 
     $logPath = "lifetime_log.txt"
