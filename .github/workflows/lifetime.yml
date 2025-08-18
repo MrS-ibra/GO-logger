@@ -35,3 +35,13 @@ jobs:
           git add lifetime_log.txt
           git commit -m "Update lifetime count"
           git push
+
+      - name: Send to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          last_line=$(tail -n 1 lifetime_log.txt)
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"$last_line\"}" \
+               $DISCORD_WEBHOOK
