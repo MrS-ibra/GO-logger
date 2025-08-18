@@ -1,4 +1,4 @@
-$log = "$env:USERPROFILE\Documents\Command and Conquer Generals Zero Hour Data\GeneralsOnlineData\generals_players.log"
+$log = "lifetime_log.txt"
 $url = "https://www.playgenerals.online/players"
 $useEmoji = $true
 
@@ -32,31 +32,5 @@ try {
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = [int]$count.Trim()
 
-    $logPath = $log
-    $previousLine = if (Test-Path $logPath) { Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1 } else { "" }
-    $previousCount = if ($previousLine -match "\d+$") { [int]($previousLine -replace "[^\d]+", "") } else { $count }
-
-    $marker = if ($count -gt $previousCount) { " ⬆️📈🔥" } else { "" }
-    $header = "$timestamp — Total Lifetime Players: $count$marker"
-
-    Add-Content $logPath ""
-    Add-Content $logPath $header
-    Write-Host $header
-
-    # Player list
-    $players = GetPlayers
-    $players = $players | Sort-Object
-
-    for ($i = 0; $i -lt $players.Count; $i++) {
-        $line = "$($i + 1). $($players[$i])"
-        Add-Content $logPath $line
-        Write-Host $line
-    }
-
-    Write-Host "Log updated at: $logPath"
-}
-catch {
-    Write-Host "ERROR OCCURRED:"
-    Write-Host "$($_.Exception | Format-List -Force)"
-    exit 8
-}
+    $previousLine = if (Test-Path $log) { Get-Content $log | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1 } else { "" }
+    $previousCount = if ($previousLine -match "\d+$") { [int]($previousLine -replace "[^\d]+", "") } else { $
