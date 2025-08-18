@@ -2,7 +2,7 @@ name: Lifetime Tracker
 
 on:
   schedule:
-    - cron: '*/1 * * * *'
+    - cron: '*/5 * * * *'  # ✅ Every 5 minutes
   workflow_dispatch:
 
 jobs:
@@ -18,10 +18,13 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GH_PAT }}  # ✅ Use your token during checkout
+          token: ${{ secrets.GH_PAT }}
 
       - name: Run Tracker
         run: ~/powershell/pwsh "./TotalLifetimePlayers.ps1"
+
+      - name: Move Log into Repo
+        run: cp /tmp/lifetime_log.txt lifetime_log.txt
 
       - name: Commit Log
         run: |
