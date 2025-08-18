@@ -10,10 +10,6 @@ try {
     $html = $response.Content
     Write-Host "HTML length: $($html.Length)"
 
-    # Dump raw HTML for inspection
-    $html | Out-File -FilePath "raw_dump.txt"
-    Write-Host "Raw HTML dumped to raw_dump.txt"
-
     # Extract lifetime player count
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim()
@@ -60,7 +56,7 @@ try {
         $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $joinedToday = [int]$lastToday - [int]$firstToday
-        $summary = "A total of $joinedToday players have joined Generals Online today."
+        $summary = "A total of $joinedToday players have joined Generals Online today. 🎉"
         Add-Content -Path $logPath -Value $summary
         Write-Host $summary
     }
