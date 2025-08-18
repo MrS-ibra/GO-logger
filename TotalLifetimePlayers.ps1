@@ -18,13 +18,11 @@ try {
     $line = "$timestamp — Total Lifetime Players: $count"
     Write-Host "📝 Log line: $line"
 
-    # GitHub Actions repo path
-    $repoRoot = Join-Path $env:GITHUB_WORKSPACE ""
-    $logPath = Join-Path $repoRoot "lifetime_log.txt"
+    $logPath = "/tmp/lifetime_log.txt"
     Write-Host "📁 Writing to: $logPath"
 
-    Set-Content -Path $logPath -Value $line
-    Write-Host "✅ Log file written successfully."
+    Add-Content -Path $logPath -Value $line
+    Write-Host "✅ Log file updated successfully."
 }
 catch {
     Write-Host "❌ ERROR OCCURRED:"
