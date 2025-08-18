@@ -7,4 +7,4 @@ $count = $count.Trim()
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $line = "$timestamp — Total Lifetime Players: $count"
 
-Set-Content -Path "lifetime_log.txt" -Value $line
+Set-Content -Path "$PSScriptRoot/lifetime_log.txt" -Value $line
