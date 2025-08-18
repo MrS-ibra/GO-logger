@@ -1,0 +1,16 @@
+name: Lifetime Tracker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PowerShell
+        run: sudo apt-get install -y powershell
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Run Tracker
+        run: pwsh ./GOLifetimeCount.ps1
