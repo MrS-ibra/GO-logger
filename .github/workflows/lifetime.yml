@@ -35,7 +35,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message=$(tail -n 2 lifetime_log.txt | grep -v "^$" | sed ':a;N;$!ba;s/\n/\\n/')
+          message=$(tail -n 3 lifetime_log.txt | grep -v "^$" | sed ':a;N;$!ba;s/\n/\\n/')
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$message\"}" \
