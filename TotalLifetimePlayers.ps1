@@ -20,7 +20,7 @@ try {
 
     $logPath = "lifetime_log.txt"
     $previousLine = if (Test-Path $logPath) {
-        Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" -and $_ -match "—" } | Select-Object -Last 1
+        Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1
     } else {
         ""
     }
@@ -31,29 +31,31 @@ try {
         $count
     }
 
-    $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈" } else { "" }
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $line = "$timestamp  —  Total Lifetime Players: $count$marker"
-    $onlineLine = "There are $online online players now. 🎮"
+    if ([int]$count -gt [int]$previousCount) {
+        $marker = " ⬆️📈"
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
+        $line = "$timestamp  —  Total Lifetime Players: $count$marker"
+        $onlineLine = "There are $online online players now. 🎮"
+        Write-Host "Log line: $line"
+        Add-Content -Path $logPath -Value $line
+        Add-Content -Path $logPath -Value $onlineLine
+        Write-Host "Log file updated successfully."
 
-    Write-Host "Log line: $line"
-    Add-Content -Path $logPath -Value $line
-    Add-Content -Path $logPath -Value $onlineLine
-    Write-Host "Log file updated successfully."
+        # Calculate today's total growth
+        $today = Get-Date -Format "yyyy-MM-dd"
+        $todayLines = Get-Content $logPath | Where-Object { $_ -like "$today*" -and $_ -match "Total Lifetime Players:" }
 
-    # Calculate today's total growth
-    $today = Get-Date -Format "yyyy-MM-dd"
-    $todayLines = Get-Content $logPath | Where-Object {
-        $_ -match "^$today\s+\d{2}:\d{2}\s+—\s+Total Lifetime Players:"
+        if ($todayLines.Count -ge 2) {
+            $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
+            $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
+            $joinedToday = [int]$lastToday - [int]$firstToday
+            $summary = "A total of $joinedToday players have joined Generals Online today so far. "
+            Add-Content -Path $logPath -Value $summary
+            Write-Host $summary
+        }
     }
-
-    if ($todayLines.Count -ge 2) {
-        $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
-        $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
-        $joinedToday = [int]$lastToday - [int]$firstToday
-        $summary = "A total of $joinedToday players have joined Generals Online today so far. 🎉"
-        Add-Content -Path $logPath -Value $summary
-        Write-Host $summary
+    else {
+        Write-Host "No increase detected. Skipping log."
     }
 }
 catch {
