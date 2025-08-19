@@ -8,6 +8,7 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
     steps:
       - name: Install PowerShell 7.4.1
         run: |
@@ -27,15 +28,15 @@ jobs:
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
-          git add lifetime_log.txt
-          git commit -m "Update lifetime log"
+          git add lifetime_log.txt peak_log.txt
+          git commit -m "Update lifetime and peak logs"
           git push
 
       - name: Send to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message=$(tail -n 3 lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
+          message=$(tail -n 5 lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$message\"}" \
