@@ -33,15 +33,15 @@ jobs:
 
       - name: Send to Discord
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message=$(tail -n 10 lifetime_log.txt | grep "$(date +'%Y-%m-%d')" | \
-            sed 's/Total Lifetime Players: \([0-9]\+\)/Total Lifetime Players: **\1**/' | \
-            sed 's/There are \([0-9]\+\) online players/There are **\1** online players/' | \
-            sed 's/Peak Online Today: \([0-9]\+\)/Peak Online Today: **\1**/' | \
-            sed 's/A total of \([0-9]\+\)/A total of **\1**/' | \
-            awk '{print}' ORS='\\n')
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"$message\"}" \
-               $DISCORD_WEBHOOK
+        message=$(tac lifetime_log.txt | grep -m 4 "$(date +'%Y-%m-%d')" | tac | \
+        sed 's/Total Lifetime Players: \([0-9]\+\)/Total Lifetime Players: **\1**/' | \
+        sed 's/There are \([0-9]\+\) online players/There are **\1** online players/' | \
+        sed 's/Peak Online Today: \([0-9]\+\)/Peak Online Today: **\1**/' | \
+        sed 's/A total of \([0-9]\+\)/A total of **\1**/' | \
+        awk '{print}' ORS='\\n')
+        curl -H "Content-Type: application/json" \
+         -X POST \
+         -d "{\"content\": \"$message\"}" \
+         $DISCORD_WEBHOOK
