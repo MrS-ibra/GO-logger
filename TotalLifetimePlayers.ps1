@@ -75,9 +75,9 @@ try {
     $marker = if ([int]$count -gt $previousCount) { " ⬆️📈" } else { "" }
 
     $line1 = "━━━━━━━━━━━━━━━━━━━━━━"
-    $line2 = " **Time:** $timeOnly GMT"
-    $line3 = " **Lifetime players:** $count$marker"
-    $line4 = " **Online players:** $online"
+    $line2 = "**Time:** $timeOnly GMT"
+    $line3 = "**Lifetime players:** $count$marker"
+    $line4 = "**Online players:** $online"
     $line5 = $summary
     $line6 = $peakLine
     $line7 = "━━━━━━━━━━━━━━━━━━━━━━"
@@ -108,9 +108,9 @@ catch {
 
     Set-Content -Path $logPath -Value @(
         "━━━━━━━━━━━━━━━━━━━━━━"
-        " **Time:** $timeOnly GMT"
+        "   **Time:** $timeOnly GMT"
         "❌ **Scrape failed:** site unreachable or error occurred"
-        " **Error:** $errorMsg"
+        "   **Error:** $errorMsg"
         "━━━━━━━━━━━━━━━━━━━━━━"
     )
 
