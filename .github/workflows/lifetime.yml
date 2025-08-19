@@ -32,11 +32,11 @@ jobs:
           git push
 
       - name: Send to Discord
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          message=$(grep "$(date +'%Y-%m-%d')" lifetime_log.txt | tail -n 5 | awk '{print}' ORS='\\n')
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"$message\"}" \
-               $DISCORD_WEBHOOK
+  env:
+    DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+  run: |
+    message=$(tail -n 10 lifetime_log.txt | grep "$(date +'%Y-%m-%d')" | awk '{print}' ORS='\\n')
+    curl -H "Content-Type: application/json" \
+         -X POST \
+         -d "{\"content\": \"$message\"}" \
+         $DISCORD_WEBHOOK
