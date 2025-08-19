@@ -17,8 +17,11 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
+    # Updated online player extraction
     $online = if ($html -match "There are (\d+) online player") {
         $matches[1]
+    } elseif ($html -match "There are no players online") {
+        "0"
     } else {
         "?"
     }
@@ -30,15 +33,12 @@ try {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $timeOnly = Get-Date -Format "HH:mm"
 
-    # Append to peak log with lifetime count
     Add-Content -Path $peakLog -Value "$timestamp,$online,$count"
 
-    # Get today's entries with valid lifetime counts
     $peakTodayLines = Get-Content $peakLog | Where-Object {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
-    # Calculate peak hour
     $peakEntry = $peakTodayLines | Sort-Object {
         ($_ -split ",")[1] -as [int]
     } -Descending | Select-Object -First 1
@@ -51,7 +51,6 @@ try {
         $peakLine = "🔥 **Peak time today:** not recorded ❔"
     }
 
-    # Calculate daily growth from lifetime counts
     if ($peakTodayLines.Count -ge 2) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $lastToday  = [int](($peakTodayLines[-1] -split ",")[2])
@@ -67,7 +66,6 @@ try {
         $summary = "📈 **Joined Today:** +0"
     }
 
-    # Compare to previous run
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
     } else {
@@ -76,7 +74,6 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️📈" } else { "" }
 
-    # Final log lines 
     $line1 = "━━━━━━━━━━━━━━━━━━━━━━"
     $line2 = "📅 **Time:** $timeOnly GMT"
     $line3 = "👥 **Lifetime players:** $count$marker"
@@ -85,7 +82,6 @@ try {
     $line6 = $peakLine
     $line7 = "━━━━━━━━━━━━━━━━━━━━━━"
 
-    # Overwrite log with leaderboard block
     Set-Content -Path $logPath -Value @(
         $line1
         $line2
