@@ -67,7 +67,7 @@ try {
         $summary = "📈 **Joined Today:** +0"
     }
 
-    # Compare to previous run (not first of day)
+    # Compare to previous run
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
     } else {
@@ -76,11 +76,11 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️📈" } else { "" }
 
-    # Final log lines (7 total)
+    # Final log lines 
     $line1 = "━━━━━━━━━━━━━━━━━━━━━━"
     $line2 = "📅 **Time:** $timeOnly GMT"
     $line3 = "👥 **Lifetime players:** $count$marker"
-    $line4 = "🎮 **Online:** $online"
+    $line4 = "🎮 **Online players:** $online"
     $line5 = $summary
     $line6 = $peakLine
     $line7 = "━━━━━━━━━━━━━━━━━━━━━━"
