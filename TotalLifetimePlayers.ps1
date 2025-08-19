@@ -33,9 +33,9 @@ try {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $timeOnly = Get-Date -Format "HH:mm"
 
-    # Trim peak_log.txt if it exceeds 300 lines
-    $maxLines = 300
-    $trimCount = 50
+    # Trim peak_log.txt if it exceeds 125 lines
+    $maxLines = 125
+    $trimCount = 25
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
         if ($logLines.Count -ge $maxLines) {
