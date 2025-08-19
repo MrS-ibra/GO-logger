@@ -44,7 +44,12 @@ jobs:
             sed 's/There are \([0-9]\+\) online players/There are **\1** online players/' | \
             sed 's/Peak Online Today: \([0-9]\+\)/Peak Online Today: **\1**/' | \
             sed 's/A total of \([0-9]\+\)/A total of **\1**/' )
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"$message\"}" \
-               $DISCORD_WEBHOOK
+
+          if [ -n "$message" ]; then
+            curl -H "Content-Type: application/json" \
+                 -X POST \
+                 -d "{\"content\": \"$message\"}" \
+                 $DISCORD_WEBHOOK
+          else
+            echo "No message to send — log block not found."
+          fi
