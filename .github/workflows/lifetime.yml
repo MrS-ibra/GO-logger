@@ -26,15 +26,15 @@ jobs:
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
-          git add lifetime_log.txt peak_log.txt
-          git commit -m "Update lifetime and peak logs" || echo "No changes to commit"
+          git add lifetime_log.txt peak_log.txt daily_summary.txt
+          git commit -m "Update lifetime, peak, and summary logs" || echo "No changes to commit"
           git push
 
-      - name: Send to Discord
+      - name: Send Lifetime Log to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message=$(tail -n 5 lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
+          message=$(cat lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$message\"}" \
