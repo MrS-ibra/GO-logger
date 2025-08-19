@@ -57,9 +57,11 @@ try {
         $summary = "A total of $joinedToday players have joined Generals Online today."
     } elseif ($peakTodayLines.Count -eq 1) {
         $firstToday = ($peakTodayLines[0] -split ",")[2]
+        $joinedToday = 0
         $summary = "A total of 0 players have joined Generals Online today."
     } else {
         $firstToday = $count
+        $joinedToday = 0
         $summary = "A total of 0 players have joined Generals Online today."
     }
 
