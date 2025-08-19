@@ -104,8 +104,8 @@ try {
         $line7
     )
 
-    # Write daily summary line
-    $summaryLine = "$today: +$joinedToday joined — Peak at $peakTime GMT with $peakCount players"
+    # Write daily summary line (fixed interpolation)
+    $summaryLine = "${today}: +$joinedToday joined — Peak at $peakTime GMT with $peakCount players"
     Add-Content -Path $summaryLog -Value $summaryLine
 
     Write-Host $line2
