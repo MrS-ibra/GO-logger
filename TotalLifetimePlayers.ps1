@@ -88,7 +88,7 @@ try {
     if ($peakEntry) {
         $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
         $peakCount = ($peakEntry -split ",")[1]
-        $peakLine = "Peak hour today was at $peakTime with $peakCount players online. 🔥"
+        $peakLine = "Peak time today was at $peakTime GMT with $peakCount players online. 🕐 "
     } else {
         $peakLine = "Peak hour today was not recorded. ❔"
     }
