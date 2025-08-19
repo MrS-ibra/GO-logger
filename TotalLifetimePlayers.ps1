@@ -46,9 +46,9 @@ try {
     if ($peakEntry) {
         $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
         $peakCount = ($peakEntry -split ",")[1]
-        $peakLine = "🔥 Peak time today:  **$peakTime GMT** with **$peakCount players**"
+        $peakLine = "🔥 **Peak time today:** $peakTime GMT with $peakCount players"
     } else {
-        $peakLine = "🔥 Peak time today:  **not recorded** ❔"
+        $peakLine = "🔥 **Peak time today:** not recorded ❔"
     }
 
     # Calculate daily growth from lifetime counts
@@ -56,15 +56,15 @@ try {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $lastToday  = [int](($peakTodayLines[-1] -split ",")[2])
         $joinedToday = $lastToday - $firstToday
-        $summary = "📈 Joined Today:       **+$joinedToday**"
+        $summary = "📈 **Joined Today:** +$joinedToday"
     } elseif ($peakTodayLines.Count -eq 1) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $joinedToday = 0
-        $summary = "📈 Joined Today:       **+0**"
+        $summary = "📈 **Joined Today:** +0"
     } else {
         $firstToday = [int]$count
         $joinedToday = 0
-        $summary = "📈 Joined Today:       **+0**"
+        $summary = "📈 **Joined Today:** +0"
     }
 
     # Compare to previous run (not first of day)
@@ -76,11 +76,11 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️📈" } else { "" }
 
-    # Final log lines (6 total)
+    # Final log lines (7 total)
     $line1 = "━━━━━━━━━━━━━━━━━━━━━━"
-    $line2 = "📅 Time:                         $timeOnly GMT"
-    $line3 = "👥 Lifetime players:   **$count**$marker"
-    $line4 = "🎮 Online:                   **$online**"
+    $line2 = "📅 **Time:** $timeOnly GMT"
+    $line3 = "👥 **Lifetime players:** $count$marker"
+    $line4 = "🎮 **Online:** $online"
     $line5 = $summary
     $line6 = $peakLine
     $line7 = "━━━━━━━━━━━━━━━━━━━━━━"
