@@ -51,14 +51,14 @@ try {
 
     # Check and log peak online count
     $today = Get-Date -Format "yyyy-MM-dd"
-    $logLinesToday = if (Test-Path $logPath) {
-        Get-Content $logPath | Where-Object { $_ -match "^$today" -and $_ -match "online players now" }
+    $peakLinesToday = if (Test-Path $logPath) {
+        Get-Content $logPath | Where-Object { $_ -match "^🕒 Peak Online Today: \d+ players at $today" }
     } else {
         @()
     }
 
-    $previousPeak = ($logLinesToday | ForEach-Object {
-        if ($_ -match "There are (\d+) online players now") { [int]$matches[1] } else { 0 }
+    $previousPeak = ($peakLinesToday | ForEach-Object {
+        if ($_ -match "Peak Online Today: (\d+) players") { [int]$matches[1] } else { 0 }
     }) | Sort-Object -Descending | Select-Object -First 1
 
     if ([int]$online -gt $previousPeak) {
