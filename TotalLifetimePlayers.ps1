@@ -56,11 +56,17 @@ try {
         $joinedToday = [int]$lastToday - [int]$firstToday
         $summary = "A total of $joinedToday players have joined Generals Online today."
     } else {
+        $firstToday = $count
         $summary = "A total of 0 players have joined Generals Online today."
     }
 
-    # Determine growth marker
-    $previousCount = $firstToday
+    # Compare to previous run (not first of day)
+    $previousCount = if ($peakTodayLines.Count -ge 2) {
+        ($peakTodayLines[-2] -split ",")[2]
+    } else {
+        $count
+    }
+
     $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈" } else { "" }
 
     # Final log lines
