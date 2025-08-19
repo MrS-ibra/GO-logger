@@ -46,9 +46,9 @@ try {
     if ($peakEntry) {
         $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
         $peakCount = ($peakEntry -split ",")[1]
-        $peakLine = "**Peak time:** $peakTime GMT with **$peakCount players** online 🕐"
+        $peakLine = "🔥 Peak time today:  **$peakTime GMT** with **$peakCount players**"
     } else {
-        $peakLine = "**Peak time:** not recorded ❔"
+        $peakLine = "🔥 Peak time today:  **not recorded** ❔"
     }
 
     # Calculate daily growth from lifetime counts
@@ -56,15 +56,15 @@ try {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $lastToday  = [int](($peakTodayLines[-1] -split ",")[2])
         $joinedToday = $lastToday - $firstToday
-        $summary = "**+$joinedToday joined today**"
+        $summary = "📈 Joined Today:       **+$joinedToday**"
     } elseif ($peakTodayLines.Count -eq 1) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $joinedToday = 0
-        $summary = "**+0 joined today**"
+        $summary = "📈 Joined Today:       **+0**"
     } else {
         $firstToday = [int]$count
         $joinedToday = 0
-        $summary = "**+0 joined today**"
+        $summary = "📈 Joined Today:       **+0**"
     }
 
     # Compare to previous run (not first of day)
@@ -76,22 +76,31 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️📈" } else { "" }
 
-    # Final log lines with bold formatting
-    $line = "$timestamp — **Total Lifetime Players: $count**$marker"
-    $onlineLine = "**There are $online online players now.** 🎮"
+    # Final log lines (6 total)
+    $line1 = "━━━━━━━━━━━━━━━━━━━━━━"
+    $line2 = "📅 Time:                         $timeOnly GMT"
+    $line3 = "👥 Lifetime players:   **$count**$marker"
+    $line4 = "🎮 Online:                   **$online**"
+    $line5 = $summary
+    $line6 = $peakLine
+    $line7 = "━━━━━━━━━━━━━━━━━━━━━━"
 
-    # Overwrite log with clean block
+    # Overwrite log with leaderboard block
     Set-Content -Path $logPath -Value @(
-        $line
-        $onlineLine
-        $summary
-        $peakLine
+        $line1
+        $line2
+        $line3
+        $line4
+        $line5
+        $line6
+        $line7
     )
 
-    Write-Host $line
-    Write-Host $onlineLine
-    Write-Host $summary
-    Write-Host $peakLine
+    Write-Host $line2
+    Write-Host $line3
+    Write-Host $line4
+    Write-Host $line5
+    Write-Host $line6
 }
 catch {
     Write-Host "ERROR OCCURRED:"
