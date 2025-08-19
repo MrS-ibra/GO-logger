@@ -29,7 +29,6 @@ try {
 
     $logPath = "lifetime_log.txt"
     $peakLog = "peak_log.txt"
-    $summaryLog = "daily_summary.txt"
     $today = Get-Date -Format "yyyy-MM-dd"
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $timeOnly = Get-Date -Format "HH:mm"
@@ -62,8 +61,6 @@ try {
         $peakLine = "**Peak time today:** $peakTime GMT with $peakCount players"
     } else {
         $peakLine = "**Peak time today:** not recorded ❔"
-        $peakTime = "?"
-        $peakCount = "?"
     }
 
     # joinedToday logic
@@ -104,16 +101,11 @@ try {
         $line7
     )
 
-    # Write daily summary line (fixed interpolation)
-    $summaryLine = "${today}: +$joinedToday joined — Peak at $peakTime GMT with $peakCount players"
-    Add-Content -Path $summaryLog -Value $summaryLine
-
     Write-Host $line2
     Write-Host $line3
     Write-Host $line4
     Write-Host $line5
     Write-Host $line6
-    Write-Host "Summary: $summaryLine"
 }
 catch {
     Write-Host "ERROR OCCURRED:"
