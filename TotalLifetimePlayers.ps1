@@ -10,7 +10,7 @@ try {
     $html = $response.Content
     Write-Host "HTML length: $($html.Length)"
 
-    # Dump raw HTML for inspection (overwrites each run)
+    # Dump raw HTML for inspection
     $html | Out-File -FilePath "raw_dump.txt"
     Write-Host "Raw HTML dumped to raw_dump.txt"
 
@@ -19,7 +19,7 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
-    # Precise extraction of online player count
+    # Extract online player count
     $online = if ($html -match "There are (\d+) online player") {
         $matches[1]
     } else {
@@ -42,13 +42,18 @@ try {
 
     $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈" } else { "" }
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $line = "$timestamp  —  Total Lifetime Players: $count$marker"
+    $timeOnly   = Get-Date -Format "HH:mm"
+    $line       = "$timestamp  —  Total Lifetime Players: $count$marker"
     $onlineLine = "There are $online online players now. 🎮"
 
     Write-Host "Log line: $line"
     Add-Content -Path $logPath -Value $line
     Add-Content -Path $logPath -Value $onlineLine
     Write-Host "Log file updated successfully."
+
+    # Track peak hour
+    $peakLog = "peak_log.txt"
+    Add-Content -Path $peakLog -Value "$timestamp,$online"
 
     # Calculate today's total growth
     $today = Get-Date -Format "yyyy-MM-dd"
@@ -63,6 +68,20 @@ try {
         $summary = "A total of $joinedToday players have joined Generals Online today."
         Add-Content -Path $logPath -Value $summary
         Write-Host $summary
+    }
+
+    # Analyze peak for today
+    $peakTodayLines = Get-Content $peakLog | Where-Object { $_ -match "^$today" }
+    $peakEntry = $peakTodayLines | Sort-Object {
+        ($_ -split ",")[1] -as [int]
+    } -Descending | Select-Object -First 1
+
+    if ($peakEntry) {
+        $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
+        $peakCount = ($peakEntry -split ",")[1]
+        $peakLine = "Peak hour today was at $peakTime with $peakCount players online. 🔥"
+        Add-Content -Path $logPath -Value $peakLine
+        Write-Host $peakLine
     }
 }
 catch {
