@@ -63,7 +63,7 @@ try {
 
     if ([int]$online -gt $previousPeak) {
         $peakTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-        $peakLine = "🕒 Peak Online Today: $online players at $peakTimestamp "
+        $peakLine = "🕒 Peak Online Today: $online players at $peakTimestamp"
         Add-Content -Path $logPath -Value $peakLine
         Write-Host $peakLine
     }
