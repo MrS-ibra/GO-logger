@@ -37,5 +37,5 @@ jobs:
           message=$(tail -n 5 lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"\`\`\`$message\`\`\`\"}" \
+               -d "{\"content\": \"$message\"}" \
                $DISCORD_WEBHOOK
