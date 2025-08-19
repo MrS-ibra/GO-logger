@@ -28,6 +28,12 @@ try {
     Write-Host "Extracted online: $online"
 
     $logPath = "lifetime_log.txt"
+    $peakLog = "peak_log.txt"
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
+    $timeOnly = Get-Date -Format "HH:mm"
+
+    # Read previous log line
     $previousLine = if (Test-Path $logPath) {
         Get-Content $logPath | Where-Object { $_ -match "Total Lifetime Players:" } | Select-Object -Last 1
     } else {
@@ -41,23 +47,26 @@ try {
     }
 
     $marker = if ([int]$count -gt [int]$previousCount) { " ⬆️📈" } else { "" }
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $timeOnly   = Get-Date -Format "HH:mm"
-    $line       = "$timestamp  —  Total Lifetime Players: $count$marker"
+    $line = "$timestamp  —  Total Lifetime Players: $count$marker"
     $onlineLine = "There are $online online players now. 🎮"
 
-    Write-Host "Log line: $line"
+    # Append main log lines
     Add-Content -Path $logPath -Value $line
     Add-Content -Path $logPath -Value $onlineLine
-    Write-Host "Log file updated successfully."
 
     # Track peak hour
-    $peakLog = "peak_log.txt"
     Add-Content -Path $peakLog -Value "$timestamp,$online"
 
-    # Calculate today's total growth
-    $today = Get-Date -Format "yyyy-MM-dd"
-    $todayLines = Get-Content $logPath | Where-Object {
+    # Remove previous summary and peak lines
+    $logContent = Get-Content $logPath
+    $filteredLog = $logContent | Where-Object {
+        ($_ -notmatch "^A total of \d+ players have joined Generals Online today.") -and
+        ($_ -notmatch "^Peak hour today was at \d{2}:\d{2} with \d+ players online.")
+    }
+    $filteredLog | Set-Content $logPath
+
+    # Recalculate today's summary
+    $todayLines = $filteredLog | Where-Object {
         $_ -match "^$today\s+\d{2}:\d{2}\s+—\s+Total Lifetime Players:"
     }
 
@@ -66,11 +75,11 @@ try {
         $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $joinedToday = [int]$lastToday - [int]$firstToday
         $summary = "A total of $joinedToday players have joined Generals Online today."
-        Add-Content -Path $logPath -Value $summary
-        Write-Host $summary
+    } else {
+        $summary = "A total of 0 players have joined Generals Online today."
     }
 
-    # Analyze peak for today
+    # Recalculate peak hour
     $peakTodayLines = Get-Content $peakLog | Where-Object { $_ -match "^$today" }
     $peakEntry = $peakTodayLines | Sort-Object {
         ($_ -split ",")[1] -as [int]
@@ -80,9 +89,16 @@ try {
         $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
         $peakCount = ($peakEntry -split ",")[1]
         $peakLine = "Peak hour today was at $peakTime with $peakCount players online. 🔥"
-        Add-Content -Path $logPath -Value $peakLine
-        Write-Host $peakLine
+    } else {
+        $peakLine = "Peak hour today was not recorded. ❔"
     }
+
+    # Append summary and peak lines last
+    Add-Content -Path $logPath -Value $summary
+    Add-Content -Path $logPath -Value $peakLine
+
+    Write-Host $summary
+    Write-Host $peakLine
 }
 catch {
     Write-Host "ERROR OCCURRED:"
