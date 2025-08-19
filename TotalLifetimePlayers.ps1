@@ -10,12 +10,16 @@ try {
     $html = $response.Content
     Write-Host "HTML length: $($html.Length)"
 
+    # Dump raw HTML for inspection (overwrites each run)
     $html | Out-File -FilePath "raw_dump.txt"
+    Write-Host "Raw HTML dumped to raw_dump.txt"
 
+    # Extract lifetime player count
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
+    # Precise extraction of online player count
     $online = if ($html -match "There are (\d+) online player") {
         $matches[1]
     } else {
@@ -41,27 +45,13 @@ try {
     $line = "$timestamp  —  Total Lifetime Players: $count$marker"
     $onlineLine = "There are $online online players now. 🎮"
 
+    Write-Host "Log line: $line"
     Add-Content -Path $logPath -Value $line
     Add-Content -Path $logPath -Value $onlineLine
+    Write-Host "Log file updated successfully."
 
-    # ✅ Fixed peak tracking logic
+    # Calculate today's total growth
     $today = Get-Date -Format "yyyy-MM-dd"
-    $peakLinesToday = if (Test-Path $logPath) {
-        Get-Content $logPath | Where-Object { $_ -match "^🕒 Peak Online Today: \d+ players at $today" }
-    } else {
-        @()
-    }
-
-    $previousPeak = ($peakLinesToday | ForEach-Object {
-        if ($_ -match "Peak Online Today: (\d+) players") { [int]$matches[1] } else { 0 }
-    }) | Sort-Object -Descending | Select-Object -First 1
-
-    if ([int]$online -gt $previousPeak) {
-        $peakTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-        $peakLine = "🕒 Peak Online Today: $online players at $peakTimestamp"
-        Add-Content -Path $logPath -Value $peakLine
-    }
-
     $todayLines = Get-Content $logPath | Where-Object {
         $_ -match "^$today\s+\d{2}:\d{2}\s+—\s+Total Lifetime Players:"
     }
@@ -70,8 +60,9 @@ try {
         $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $joinedToday = [int]$lastToday - [int]$firstToday
-        $summary = "A total of $joinedToday players have joined Generals Online today. 🎉"
+        $summary = "A total of $joinedToday players have joined Generals Online today."
         Add-Content -Path $logPath -Value $summary
+        Write-Host $summary
     }
 }
 catch {
