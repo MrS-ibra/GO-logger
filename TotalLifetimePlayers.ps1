@@ -101,5 +101,18 @@ try {
 catch {
     Write-Host "ERROR OCCURRED:"
     Write-Host $_.Exception.Message
+
+    $logPath = "lifetime_log.txt"
+    $timeOnly = Get-Date -Format "HH:mm"
+    $errorMsg = $_.Exception.Message -replace "`r`n", " " -replace "`n", " "
+
+    Set-Content -Path $logPath -Value @(
+        "━━━━━━━━━━━━━━━━━━━━━━"
+        "📅 **Time:** $timeOnly GMT"
+        "❌ **Scrape failed:** site unreachable or error occurred"
+        "🛠️ **Error:** $errorMsg"
+        "━━━━━━━━━━━━━━━━━━━━━━"
+    )
+
     exit 8
 }
