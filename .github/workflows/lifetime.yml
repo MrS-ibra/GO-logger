@@ -9,10 +9,9 @@ jobs:
 
     steps:
       - name: Install PowerShell 7.4.1
-        run: |
-          wget https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell-7.4.1-linux-x64.tar.gz
-          mkdir ~/powershell
-          tar -xvf ./powershell-7.4.1-linux-x64.tar.gz -C ~/powershell
+        uses: PowerShell/Setup-PowerShell@v1
+        with:
+          version: '7.4.1'
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -20,14 +19,14 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Run Tracker
-        run: ~/powershell/pwsh "./TotalLifetimePlayers.ps1"
+        run: pwsh "./TotalLifetimePlayers.ps1"
 
       - name: Commit Log
         run: |
           git config user.name "IbraBot"
           git config user.email "ibra@example.com"
           git add lifetime_log.txt peak_log.txt
-          git commit -m "Update lifetime and peak logs"
+          git commit -m "Update lifetime and peak logs" || echo "No changes to commit"
           git push
 
       - name: Send to Discord
@@ -37,5 +36,5 @@ jobs:
           message=$(tail -n 5 lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"$message\"}" \
+               -d "{\"content\": \"\`\`\`$message\`\`\`\"}" \
                $DISCORD_WEBHOOK
