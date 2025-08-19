@@ -48,10 +48,27 @@ try {
     Write-Host "Log line: $line"
     Add-Content -Path $logPath -Value $line
     Add-Content -Path $logPath -Value $onlineLine
-    Write-Host "Log file updated successfully."
+
+    # Check and log peak online count
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $logLinesToday = if (Test-Path $logPath) {
+        Get-Content $logPath | Where-Object { $_ -match "^$today" -and $_ -match "online players now" }
+    } else {
+        @()
+    }
+
+    $previousPeak = ($logLinesToday | ForEach-Object {
+        if ($_ -match "There are (\d+) online players now") { [int]$matches[1] } else { 0 }
+    }) | Sort-Object -Descending | Select-Object -First 1
+
+    if ([int]$online -gt $previousPeak) {
+        $peakTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
+        $peakLine = "🕒 Peak Online Today: $online players at $peakTimestamp 🔥"
+        Add-Content -Path $logPath -Value $peakLine
+        Write-Host $peakLine
+    }
 
     # Calculate today's total growth
-    $today = Get-Date -Format "yyyy-MM-dd"
     $todayLines = Get-Content $logPath | Where-Object {
         $_ -match "^$today\s+\d{2}:\d{2}\s+—\s+Total Lifetime Players:"
     }
@@ -60,10 +77,12 @@ try {
         $firstToday = ($todayLines[0] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $lastToday  = ($todayLines[-1] -split "Total Lifetime Players:")[1].Trim() -split " " | Select-Object -First 1
         $joinedToday = [int]$lastToday - [int]$firstToday
-        $summary = "A total of $joinedToday players have joined Generals Online today."
+        $summary = "A total of $joinedToday players have joined Generals Online today. 🎉"
         Add-Content -Path $logPath -Value $summary
         Write-Host $summary
     }
+
+    Write-Host "Log file updated successfully."
 }
 catch {
     Write-Host "ERROR OCCURRED:"
