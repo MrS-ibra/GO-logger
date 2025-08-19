@@ -23,7 +23,7 @@ try {
     } elseif ($html -match "There are no players online") {
         "0"
     } else {
-        "?"
+        "No idea"
     }
     Write-Host "Extracted online: $online"
 
@@ -33,15 +33,27 @@ try {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $timeOnly = Get-Date -Format "HH:mm"
 
+    # Trim peak_log.txt if it exceeds 300 lines
+    $maxLines = 300
+    $trimCount = 50
+    if (Test-Path $peakLog) {
+        $logLines = Get-Content $peakLog
+        if ($logLines.Count -ge $maxLines) {
+            $logLines = $logLines[$trimCount..($logLines.Count - 1)]
+            Set-Content -Path $peakLog -Value $logLines
+        }
+    }
+
+    # Append new entry
     Add-Content -Path $peakLog -Value "$timestamp,$online,$count"
 
-    # Cache log content
+    # Cache today's entries
     $peakLogLines = Get-Content $peakLog
     $peakTodayLines = $peakLogLines | Where-Object {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
-    # Simplified peak extraction
+    # peak extraction
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
@@ -51,7 +63,7 @@ try {
         $peakLine = "**Peak time today:** not recorded ❔"
     }
 
-    # Consolidated joinedToday logic
+    # joinedToday logic
     $joinedToday = 0
     if ($peakTodayLines.Count -ge 2) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
