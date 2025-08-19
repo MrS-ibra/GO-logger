@@ -31,6 +31,14 @@ jobs:
           git commit -m "Update lifetime log"
           git push
 
+      - name: Debug Log Block
+        run: |
+          tac lifetime_log.txt | awk '
+            BEGIN {block=""}
+            /^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/ && block != "" {exit}
+            {block=$0 "\n" block}
+            END {print block}'
+
       - name: Send to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -44,6 +52,9 @@ jobs:
             sed 's/There are \([0-9]\+\) online players/There are **\1** online players/' | \
             sed 's/Peak Online Today: \([0-9]\+\)/Peak Online Today: **\1**/' | \
             sed 's/A total of \([0-9]\+\)/A total of **\1**/' )
+
+          echo "Discord message preview:"
+          echo "$message"
 
           if [ -n "$message" ]; then
             curl -H "Content-Type: application/json" \
