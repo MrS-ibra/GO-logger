@@ -46,24 +46,24 @@ try {
     if ($peakEntry) {
         $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
         $peakCount = ($peakEntry -split ",")[1]
-        $peakLine = " **Peak time today:** $peakTime GMT with $peakCount players"
+        $peakLine = "**Peak time today:** $peakTime GMT with $peakCount players"
     } else {
-        $peakLine = " **Peak time today:** not recorded ❔"
+        $peakLine = "**Peak time today:** not recorded ❔"
     }
 
     if ($peakTodayLines.Count -ge 2) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $lastToday  = [int](($peakTodayLines[-1] -split ",")[2])
         $joinedToday = $lastToday - $firstToday
-        $summary = " **Joined Today:** +$joinedToday"
+        $summary = "**Joined Today:** +$joinedToday"
     } elseif ($peakTodayLines.Count -eq 1) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $joinedToday = 0
-        $summary = " **Joined Today:** +0"
+        $summary = "**Joined Today:** +0"
     } else {
         $firstToday = [int]$count
         $joinedToday = 0
-        $summary = " **Joined Today:** +0"
+        $summary = "**Joined Today:** +0"
     }
 
     $previousCount = if ($peakTodayLines.Count -ge 2) {
