@@ -84,7 +84,7 @@ try {
         [int]$count
     }
 
-    $marker = if ([int]$count -gt $previousCount) { " ⬆️📈" } else { "" }
+    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
     $line1 = "━━━━━━━━━━━━━━━━━━━━━━"
     $line2 = "**Time:** $timeOnly GMT"
