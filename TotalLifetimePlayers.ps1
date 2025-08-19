@@ -29,12 +29,13 @@ try {
 
     $logPath = "lifetime_log.txt"
     $peakLog = "peak_log.txt"
+    $summaryLog = "daily_summary.txt"
     $today = Get-Date -Format "yyyy-MM-dd"
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $timeOnly = Get-Date -Format "HH:mm"
 
-    # Trim peak_log.txt if it exceeds 125 lines
-    $maxLines = 125
+    # Trim peak_log.txt if it exceeds 150 lines
+    $maxLines = 150
     $trimCount = 25
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
@@ -53,7 +54,7 @@ try {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
-    # peak extraction
+    # Peak extraction
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
@@ -61,6 +62,8 @@ try {
         $peakLine = "**Peak time today:** $peakTime GMT with $peakCount players"
     } else {
         $peakLine = "**Peak time today:** not recorded ❔"
+        $peakTime = "?"
+        $peakCount = "?"
     }
 
     # joinedToday logic
@@ -74,7 +77,6 @@ try {
     } else {
         $firstToday = [int]$count
     }
-    $summary = "**Joined Today:** +$joinedToday"
 
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
@@ -88,7 +90,7 @@ try {
     $line2 = "**Time:** $timeOnly GMT"
     $line3 = "**Lifetime players:** $count$marker"
     $line4 = "**Online players:** $online"
-    $line5 = $summary
+    $line5 = "**Joined Today:** +$joinedToday"
     $line6 = $peakLine
     $line7 = "━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -102,11 +104,16 @@ try {
         $line7
     )
 
+    # Write daily summary line
+    $summaryLine = "$today: +$joinedToday joined — Peak at $peakTime GMT with $peakCount players"
+    Add-Content -Path $summaryLog -Value $summaryLine
+
     Write-Host $line2
     Write-Host $line3
     Write-Host $line4
     Write-Host $line5
     Write-Host $line6
+    Write-Host "Summary: $summaryLine"
 }
 catch {
     Write-Host "ERROR OCCURRED:"
