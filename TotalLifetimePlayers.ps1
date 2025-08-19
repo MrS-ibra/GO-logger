@@ -35,36 +35,34 @@ try {
 
     Add-Content -Path $peakLog -Value "$timestamp,$online,$count"
 
-    $peakTodayLines = Get-Content $peakLog | Where-Object {
+    # Cache log content
+    $peakLogLines = Get-Content $peakLog
+    $peakTodayLines = $peakLogLines | Where-Object {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
-    $peakEntry = $peakTodayLines | Sort-Object {
-        ($_ -split ",")[1] -as [int]
-    } -Descending | Select-Object -First 1
-
+    # Simplified peak extraction
+    $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
     if ($peakEntry) {
-        $peakTime = ($peakEntry -split ",")[0] -split " " | Select-Object -Last 1
-        $peakCount = ($peakEntry -split ",")[1]
+        $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
+        $peakTime = $peakTime -split " " | Select-Object -Last 1
         $peakLine = "**Peak time today:** $peakTime GMT with $peakCount players"
     } else {
         $peakLine = "**Peak time today:** not recorded ❔"
     }
 
+    # Consolidated joinedToday logic
+    $joinedToday = 0
     if ($peakTodayLines.Count -ge 2) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
         $lastToday  = [int](($peakTodayLines[-1] -split ",")[2])
         $joinedToday = $lastToday - $firstToday
-        $summary = "**Joined Today:** +$joinedToday"
     } elseif ($peakTodayLines.Count -eq 1) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
-        $joinedToday = 0
-        $summary = "**Joined Today:** +0"
     } else {
         $firstToday = [int]$count
-        $joinedToday = 0
-        $summary = "**Joined Today:** +0"
     }
+    $summary = "**Joined Today:** +$joinedToday"
 
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
