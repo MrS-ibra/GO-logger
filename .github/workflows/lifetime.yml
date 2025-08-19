@@ -35,8 +35,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message="📊 **Generals Online Stats**\\n"
-          message+=$(tail -n 10 lifetime_log.txt | grep "$(date +'%Y-%m-%d')" | \
+          message=$(tail -n 10 lifetime_log.txt | grep "$(date +'%Y-%m-%d')" | \
             sed 's/Total Lifetime Players: \([0-9]\+\)/Total Lifetime Players: **\1**/' | \
             sed 's/There are \([0-9]\+\) online players/There are **\1** online players/' | \
             sed 's/Peak Online Today: \([0-9]\+\)/Peak Online Today: **\1**/' | \
