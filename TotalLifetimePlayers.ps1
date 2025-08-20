@@ -17,7 +17,6 @@ try {
     $count = $count.Trim()
     Write-Host "Extracted count: $count"
 
-    # Updated online player extraction
     $online = if ($html -match "There are (\d+) online player") {
         $matches[1]
     } elseif ($html -match "There are no players online") {
@@ -33,7 +32,6 @@ try {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     $timeOnly = Get-Date -Format "HH:mm"
 
-    # Trim peak_log.txt if it exceeds 150 lines
     $maxLines = 150
     $trimCount = 25
     if (Test-Path $peakLog) {
@@ -44,26 +42,22 @@ try {
         }
     }
 
-    # Append new entry
     Add-Content -Path $peakLog -Value "$timestamp,$online,$count"
 
-    # Cache today's entries
     $peakLogLines = Get-Content $peakLog
     $peakTodayLines = $peakLogLines | Where-Object {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
-    # Peak extraction
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        $peakLine = "**Peak time today:** $peakTime GMT with $peakCount players"
+        $peakLine = "Peak time today: $peakTime GMT — $peakCount players"
     } else {
-        $peakLine = "**Peak time today:** not recorded ❔"
+        $peakLine = "Peak time today: not recorded ❔"
     }
 
-    # joinedToday logic
     $joinedToday = 0
     if ($peakTodayLines.Count -ge 2) {
         $firstToday = [int](($peakTodayLines[0] -split ",")[2])
@@ -83,13 +77,12 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
-    $line1 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    $line2 = "**Time (GMT):** $timeOnly"
-    $line3 = "**Lifetime players:** $count$marker"
-    $line4 = "**Online players:** $online"
-    $line5 = "**Joined Today:** +$joinedToday"
-    $line6 = $peakLine
-    $line7 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    $line1 = "━━━━Time (GMT: $timeOnly━━━━━━"
+    $line2 = "Lifetime players: $count."
+    $line3 = "Online players: $online"
+    $line4 = "Joined Today: +$joinedToday"
+    $line5 = $peakLine
+    $line6 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     Set-Content -Path $logPath -Value @(
         $line1
@@ -98,14 +91,13 @@ try {
         $line4
         $line5
         $line6
-        $line7
     )
 
+    Write-Host $line1
     Write-Host $line2
     Write-Host $line3
     Write-Host $line4
     Write-Host $line5
-    Write-Host $line6
 }
 catch {
     Write-Host "ERROR OCCURRED:"
@@ -117,9 +109,9 @@ catch {
 
     Set-Content -Path $logPath -Value @(
         "━━━━━━━━━━━━━━━━━━━━━━"
-        "   **Time:** $timeOnly GMT"
-        "❌ **Scrape failed:** site unreachable or error occurred"
-        "   **Error:** $errorMsg"
+        "   GMT Time: $timeOnly"
+        "❌ Scrape failed: site unreachable or error occurred"
+        "   Error: $errorMsg"
         "━━━━━━━━━━━━━━━━━━━━━━"
     )
 
