@@ -1,4 +1,4 @@
-name: Lifetime Tracker
+name: Player Stats Monitor
 
 on:
   workflow_dispatch:
