@@ -61,7 +61,7 @@ $summary = @"
 ````
 |Time (GMT)| Online | Total  |
 | $timeCol   | $onlineCol | $totalCol |
-
+``
 New Today  |     Peak        |
  $newCol    | $peakCol |
 ````
