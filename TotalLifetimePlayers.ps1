@@ -57,21 +57,11 @@ try {
     $line4 = "**New players today**: +$joinedToday"
     $line5 = $peakLine
 
-    Set-Content -Path $logPath -Value @(
-        $line1
-        $line2
-        $line3
-        $line4
-        $line5
-    )
+    Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
     $logPath = "lifetime_log.txt"
-    $message = @"
-━━━━━━━━━━━━━━━━━━━━━━
-❌ Failed: site unreachable or error occurred
-━━━━━━━━━━━━━━━━━━━━━━
-"@
+    $message = "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
     Set-Content -Path $logPath -Value $message
     exit 8
 }
