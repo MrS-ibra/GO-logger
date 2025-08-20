@@ -54,9 +54,9 @@ try {
     ````
 ━━━━━━━ Player Stats ━━━━━━━
 
-| Time (GMT) | Online | Total     | New Today | Peak |
-|------------|--------|-----------|-----------|------|
-| $timeOnly  | $online | $count $marker | +$joinedToday | $peakCount |
+| Time (GMT) | Online |   Total   | New Today | Peak Time |
+|------------|--------|-----------|-----------|-----------|
+|   $timeOnly    |     $online     |     $count $marker     |     +$joinedToday     |     $peakCount     |
 
 ````
 "@
