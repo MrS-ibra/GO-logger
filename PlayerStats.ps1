@@ -53,8 +53,8 @@ try {
 # Pad each value to fixed width
 $timeCol   = $timeOnly.PadRight(8)
 $onlineCol = $online.PadRight(6)
-$totalCol  = ($count + " " + $marker).PadRight(10)
-$newCol    = ("+" + $joinedToday).PadRight(9)
+$totalCol  = ($count + " " + $marker).PadRight(9)
+$newCol    = ("+" + $joinedToday).PadRight(8)
 $peakCol   = $peakCount.PadRight(6)
 
 $summary = @"
