@@ -19,8 +19,6 @@ try {
 
     $online = if ($html -match "There are (\d+) online player") {
         $matches[1]
-    } elseif ($html -match "There are no players online") {
-        "0"
     } else {
         "0"
     }
