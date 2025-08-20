@@ -8,54 +8,40 @@ try {
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim()
 
-    $online = if ($html -match "There are (\d+) online player") {
-        $matches[1]
-    } else {
-        "0"
-    }
+    $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
 
     $logPath = "lifetime_log.txt"
     $peakLog = "peak_log.txt"
-    $today = Get-Date -Format "yyyy-MM-dd"
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $timeOnly = Get-Date -Format "HH:mm"
 
-    $maxLines = 150
-    $trimCount = 25
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
-        if ($logLines.Count -ge $maxLines) {
-            $logLines = $logLines[$trimCount..($logLines.Count - 1)]
+        if ($logLines.Count -ge 150) {
+            $logLines = $logLines[25..($logLines.Count - 1)]
             Set-Content -Path $peakLog -Value $logLines
         }
     }
 
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
     Add-Content -Path $peakLog -Value "$timestamp,$online,$count"
 
     $peakLogLines = Get-Content $peakLog
+    $today = Get-Date -Format "yyyy-MM-dd"
     $peakTodayLines = $peakLogLines | Where-Object {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
-    if ($peakEntry) {
+    $peakLine = if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        $peakLine = "**Today’s peak**: $peakTime (GMT) — $peakCount players"
+        "**Today’s peak**: $peakTime (GMT) — $peakCount players"
     } else {
-        $peakLine = "**Today’s peak**: not recorded ❔"
+        "**Today’s peak**: not recorded ❔"
     }
 
-    $joinedToday = 0
-    if ($peakTodayLines.Count -ge 2) {
-        $firstToday = [int](($peakTodayLines[0] -split ",")[2])
-        $lastToday  = [int](($peakTodayLines[-1] -split ",")[2])
-        $joinedToday = $lastToday - $firstToday
-    } elseif ($peakTodayLines.Count -eq 1) {
-        $firstToday = [int](($peakTodayLines[0] -split ",")[2])
-    } else {
-        $firstToday = [int]$count
-    }
+    $joinedToday = if ($peakTodayLines.Count -ge 2) {
+        [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2])
+    } else { 0 }
 
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
@@ -63,10 +49,9 @@ try {
         [int]$count
     }
 
-    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
-
+    $timeOnly = Get-Date -Format "HH:mm"
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Total players**: $count$marker"
+    $line2 = "**Total players**: $count" + (if ([int]$count -gt $previousCount) { " ⬆️" } else { "" })
     $line3 = "**Online players**: $online"
     $line4 = "**New players today**: +$joinedToday"
     $line5 = $peakLine
