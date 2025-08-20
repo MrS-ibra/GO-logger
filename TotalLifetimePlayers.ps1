@@ -53,9 +53,9 @@ try {
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        $peakLine = "**Peak time today**: $peakTime (GMT) — $peakCount players"
+        $peakLine = "**Today’s peak**: $peakTime (GMT) — $peakCount players"
     } else {
-        $peakLine = "**Peak time today**: not recorded ❔"
+        $peakLine = "**Today’s peak**: not recorded ❔"
     }
 
     $joinedToday = 0
