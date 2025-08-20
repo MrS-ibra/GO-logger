@@ -19,7 +19,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Run Tracker
-        run: ~/powershell/pwsh "./TotalLifetimePlayers.ps1"
+        run: ~/powershell/pwsh "./PlayerStats.ps1"
 
       - name: Commit Log
         run: |
