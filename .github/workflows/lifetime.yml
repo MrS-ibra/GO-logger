@@ -31,6 +31,7 @@ jobs:
           git push
 
       - name: Send Lifetime Log to Discord
+        if: always()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
