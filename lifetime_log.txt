@@ -1,8 +1,5 @@
-``
-━━━━━ Time (GMT) 23:28  ━━━━━
-| Online | Total  |
-| 22     | 2358.  |
-`
-New Today  |  Peak     |
- +49       | 62        |
-``
+**━━━━━━━Time (GMT): 23:30━━━━━━━**
+**Total players**: 2358.
+**Online players**: 22
+**New players today**: +49
+**Today’s peak**: 21:00 (GMT) — 62 players
