@@ -11,8 +11,7 @@ jobs:
       - name: Install PowerShell 7.4.1
         run: |
           wget https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell-7.4.1-linux-x64.tar.gz
-          mkdir ~/powershell
-          tar -xvf ./powershell-7.4.1-linux-x64.tar.gz -C ~/powershell
+          mkdir ~/powershell && tar -xvf ./powershell-7.4.1-linux-x64.tar.gz -C ~/powershell
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -24,8 +23,8 @@ jobs:
 
       - name: Commit Log
         run: |
-          git config user.name "IbraBot"
-          git config user.email "ibra@example.com"
+          git config --global user.name "IbraBot"
+          git config --global user.email "ibra@example.com"
           git add lifetime_log.txt peak_log.txt
           git commit -m "Update lifetime and peak logs" || echo "No changes to commit"
           git push
@@ -35,7 +34,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message=$(cat lifetime_log.txt | grep -v "^$" | awk '{print}' ORS='\\n')
+          message=$(awk 'NF' lifetime_log.txt | awk '{print}' ORS='\\n')
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$message\"}" \
