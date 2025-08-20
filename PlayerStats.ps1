@@ -54,14 +54,14 @@ try {
 $timeCol   = $timeOnly.PadRight(6)
 $onlineCol = $online.PadRight(6)
 $totalCol  = ($count + " " + $marker).PadRight(6)
-$newCol    = ("+" + $joinedToday).PadRight(6)
+$newCol    = ("+" + $joinedToday).PadRight(8)
 $peakCol   = $peakCount.PadRight(13)
 
 $summary = @"
 ````
-|Time (GMT)| Online | Total  | 
+|Time (GMT)| Online | Total  |
 | $timeCol   | $onlineCol | $totalCol |
-______________________________
+
 New Today  |     Peak        |
  $newCol    | $peakCol |
 ````
