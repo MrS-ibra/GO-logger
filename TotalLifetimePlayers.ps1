@@ -21,8 +21,7 @@ try {
         }
     }
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    Add-Content -Path $peakLog -Value "$timestamp,$online,$count"
+    Add-Content -Path $peakLog -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
 
     $peakLogLines = Get-Content $peakLog
     $today = Get-Date -Format "yyyy-MM-dd"
@@ -49,9 +48,11 @@ try {
         [int]$count
     }
 
+    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
+
     $timeOnly = Get-Date -Format "HH:mm"
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Total players**: $count" + (if ([int]$count -gt $previousCount) { " ⬆️" } else { "" })
+    $line2 = "**Total players**: $count$marker"
     $line3 = "**Online players**: $online"
     $line4 = "**New players today**: +$joinedToday"
     $line5 = $peakLine
