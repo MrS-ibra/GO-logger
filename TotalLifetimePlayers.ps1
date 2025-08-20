@@ -67,16 +67,11 @@ try {
 }
 catch {
     $logPath = "lifetime_log.txt"
-    $timeOnly = Get-Date -Format "HH:mm"
-    $errorMsg = $_.Exception.Message -replace "`r`n", " " -replace "`n", " "
-
-    Set-Content -Path $logPath -Value @(
-        "━━━━━━━━━━━━━━━━━━━━━━"
-        "   GMT Time: $timeOnly"
-        "❌ Scrape failed: site unreachable or error occurred"
-        "   Error: $errorMsg"
-        "━━━━━━━━━━━━━━━━━━━━━━"
-    )
-
+    $message = @"
+━━━━━━━━━━━━━━━━━━━━━━
+❌ Scrape failed: site unreachable or error occurred
+━━━━━━━━━━━━━━━━━━━━━━
+"@
+    Set-Content -Path $logPath -Value $message
     exit 8
 }
