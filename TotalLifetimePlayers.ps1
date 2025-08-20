@@ -22,7 +22,7 @@ try {
     } elseif ($html -match "There are no players online") {
         "0"
     } else {
-        "No idea"
+        "0"
     }
     Write-Host "Extracted online: $online"
 
