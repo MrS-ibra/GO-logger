@@ -1,7 +1,7 @@
-    ``
+``
 ━━━━━━━ Player Stats ━━━━━━━
 
-| Time (GMT) | Online |   Total   | New Today | Peak Time |
-|   22:33    |   19   |   2358. ⬆️  |    +49    |    62     |
-
+| Time (GMT) | Online | Total     | New Today | Peak  |
+|------------|--------|-----------|-----------|-------|
+| 22:42      | 21     | 2358.      | +49          | 62     |
 ``
