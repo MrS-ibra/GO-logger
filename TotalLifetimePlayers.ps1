@@ -1,28 +1,18 @@
 try {
-    Write-Host "Starting scrape..."
-
     $url = "https://www.playgenerals.online/players"
-    Write-Host "Requesting: $url"
 
     $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
-    Write-Host "Response received."
-
     $html = $response.Content
-    Write-Host "HTML length: $($html.Length)"
-
     $html | Out-File -FilePath "raw_dump.txt"
-    Write-Host "Raw HTML dumped to raw_dump.txt"
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim()
-    Write-Host "Extracted count: $count"
 
     $online = if ($html -match "There are (\d+) online player") {
         $matches[1]
     } else {
         "0"
     }
-    Write-Host "Extracted online: $online"
 
     $logPath = "lifetime_log.txt"
     $peakLog = "peak_log.txt"
@@ -76,11 +66,10 @@ try {
     $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Total players**: $count$marker "
-    $line3 = "**Online players**: $online "
+    $line2 = "**Total players**: $count$marker"
+    $line3 = "**Online players**: $online"
     $line4 = "**New players today**: +$joinedToday"
     $line5 = $peakLine
-    
 
     Set-Content -Path $logPath -Value @(
         $line1
@@ -88,19 +77,9 @@ try {
         $line3
         $line4
         $line5
-        $line6
     )
-
-    Write-Host $line1
-    Write-Host $line2
-    Write-Host $line3
-    Write-Host $line4
-    Write-Host $line5
 }
 catch {
-    Write-Host "ERROR OCCURRED:"
-    Write-Host $_.Exception.Message
-
     $logPath = "lifetime_log.txt"
     $timeOnly = Get-Date -Format "HH:mm"
     $errorMsg = $_.Exception.Message -replace "`r`n", " " -replace "`n", " "
