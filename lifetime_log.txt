@@ -1,6 +1,6 @@
 ``
 |Time (GMT)| Online | Total  |
-| 23:18    | 17     | 2358.  |
+| 23:20    | 18     | 2358.  |
 
 New Today  |     Peak        |
  +49         | 62            |
