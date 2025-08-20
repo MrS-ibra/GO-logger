@@ -82,7 +82,7 @@ try {
     $line3 = "**Online players**: $online"
     $line4 = "**Joined Today**: +$joinedToday"
     $line5 = $peakLine
-    $line6 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    $line6 = "**━━━━━━━━━━━━━━━━━━━━━━━━━━━━**"
 
     Set-Content -Path $logPath -Value @(
         $line1
