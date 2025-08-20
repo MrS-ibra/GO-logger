@@ -59,11 +59,9 @@ $peakCol   = $peakCount.PadRight(13)
 
 $summary = @"
 ````
-━━━━━━━ Player Stats ━━━━━━━
-
 |Time (GMT)| Online | Total  | 
 | $timeCol   | $onlineCol | $totalCol |
-
+______________________________
 New Today  |     Peak        |
  $newCol    | $peakCol |
 ````
