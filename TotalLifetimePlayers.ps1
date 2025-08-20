@@ -1,3 +1,11 @@
+function Convert-ToBoldDigits($input) {
+    $map = @{
+        '0' = '𝟬'; '1' = '𝟭'; '2' = '𝟮'; '3' = '𝟯'; '4' = '𝟰';
+        '5' = '𝟱'; '6' = '𝟲'; '7' = '𝟳'; '8' = '𝟴'; '9' = '𝟵'
+    }
+    return ($input.ToString().ToCharArray() | ForEach-Object { $map[$_] }) -join ''
+}
+
 try {
     Write-Host "Starting scrape..."
 
@@ -53,9 +61,9 @@ try {
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        $peakLine = "**Peak time today**: $peakTime (GMT) — $peakCount players"
     } else {
-        $peakLine = "**Peak time today**: not recorded ❔"
+        $peakCount = "?"
+        $peakTime = "?"
     }
 
     $joinedToday = 0
@@ -77,12 +85,22 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
-    $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Lifetime players**: $count"
-    $line3 = "**Online players**: $online"
-    $line4 = "**Joined Today**: +$joinedToday"
-    $line5 = $peakLine
-    $line6 = "**━━━━━━━━━━━━━━━━━━━━━━━━━━━━**"
+    # Format numbers for display only
+    $displayCount = Convert-ToBoldDigits $count
+    $displayOnline = Convert-ToBoldDigits $online
+    $displayJoined = Convert-ToBoldDigits $joinedToday
+    $displayPeak = Convert-ToBoldDigits $peakCount
+
+    $line1 = "━━━━━━━Time (GMT): $timeOnly━━━━━━━"
+    $line2 = "Lifetime players: $displayCount."
+    $line3 = "Online players: $displayOnline"
+    $line4 = "Joined Today: +$displayJoined"
+    $line5 = if ($peakEntry) {
+        "Peak time today: $peakTime (GMT) — $displayPeak players"
+    } else {
+        "Peak time today: not recorded ❔"
+    }
+    $line6 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     Set-Content -Path $logPath -Value @(
         $line1
@@ -109,7 +127,7 @@ catch {
 
     Set-Content -Path $logPath -Value @(
         "━━━━━━━━━━━━━━━━━━━━━━"
-        "   GMT Time: $timeOnly"
+        "   Time (GMT): $timeOnly"
         "❌ Scrape failed: site unreachable or error occurred"
         "   Error: $errorMsg"
         "━━━━━━━━━━━━━━━━━━━━━━"
