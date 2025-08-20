@@ -78,9 +78,9 @@ try {
     $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Lifetime players**: $count "
+    $line2 = "**Total players**: $count "
     $line3 = "**Online players**: $online "
-    $line4 = "**Joined Today**: +$joinedToday"
+    $line4 = "**New players today**: +$joinedToday"
     $line5 = $peakLine
     $line6 = "**━━━━━━━━━━━━━━━━━━━━━━━━━━━━**"
 
