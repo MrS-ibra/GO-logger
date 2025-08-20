@@ -6,7 +6,7 @@ try {
     $html | Out-File -FilePath "raw_dump.txt"
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count = $count.Trim()
+    $count = $count.Trim() -replace '[^\d]', ''  # Remove non-digit characters
 
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
 
