@@ -30,12 +30,10 @@ try {
     }
 
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
-    $peakLine = if ($peakEntry) {
-        $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
-        $peakTime = $peakTime -split " " | Select-Object -Last 1
-        "**Today’s peak**: $peakTime (GMT) — $peakCount players"
+    $peakCount = if ($peakEntry) {
+        ($peakEntry -split ",")[1]
     } else {
-        "**Today’s peak**: not recorded ❔"
+        "N/A"
     }
 
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
@@ -48,16 +46,20 @@ try {
         [int]$count
     }
 
-    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
+    $marker = if ([int]$count -gt $previousCount) { "⬆️" } else { "" }
 
     $timeOnly = Get-Date -Format "HH:mm"
-    $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Total players**: $count$marker"
-    $line3 = "**Online players**: $online"
-    $line4 = "**New players today**: +$joinedToday"
-    $line5 = $peakLine
 
-    Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
+    $summary = @"
+**━━━━━━━ Player Stats ━━━━━━━**
+
+| Time (GMT) | Online | Total | New Today | Peak |
+|------------|--------|-------|-----------|------|
+| $timeOnly  | $online | $count $marker | +$joinedToday | $peakCount |
+
+"@
+
+    Set-Content -Path $logPath -Value $summary
 }
 catch {
     $logPath = "lifetime_log.txt"
