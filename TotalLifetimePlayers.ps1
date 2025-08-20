@@ -83,13 +83,13 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
-    $line1 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    $line1 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     $line2 = "**GMT Time:** $timeOnly"
     $line3 = "**Lifetime players:** $count$marker"
     $line4 = "**Online players:** $online"
     $line5 = "**Joined Today:** +$joinedToday"
     $line6 = $peakLine
-    $line7 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    $line7 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     Set-Content -Path $logPath -Value @(
         $line1
