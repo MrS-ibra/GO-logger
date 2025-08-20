@@ -30,10 +30,12 @@ try {
     }
 
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
-    $peakCount = if ($peakEntry) {
-        ($peakEntry -split ",")[1]
+    $peakLine = if ($peakEntry) {
+        $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
+        $peakTime = $peakTime -split " " | Select-Object -Last 1
+        "**Today’s peak**: $peakTime (GMT) — $peakCount players"
     } else {
-        "N/A"
+        "**Today’s peak**: not recorded ❔"
     }
 
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
@@ -46,37 +48,20 @@ try {
         [int]$count
     }
 
-    $marker = if ([int]$count -gt $previousCount) { "⬆️" } else { "" }
+    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
     $timeOnly = Get-Date -Format "HH:mm"
+    $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
+    $line2 = "**Total players**: $count$marker"
+    $line3 = "**Online players**: $online"
+    $line4 = "**New players today**: +$joinedToday"
+    $line5 = $peakLine
 
-# Pad each value to fixed width
-$timeCol   = $timeOnly.PadRight(6)
-$onlineCol = $online.PadRight(6)
-$totalCol  = ($count + " " + $marker).PadRight(6)
-$newCol    = ("+" + $joinedToday).PadRight(6)
-$peakCol   = $peakCount.PadRight(9)
-
-$summary = @"
-````
-━━━━━ Time (GMT) $timeCol ━━━━━
-| Online | Total  |
-| $onlineCol | $totalCol |
-``
-New Today  |  Peak     |
- $newCol    | $peakCol |
-````
-"@
-
-    Set-Content -Path $logPath -Value $summary -Force
+    Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
     $logPath = "lifetime_log.txt"
-    $message = @"
-━━━━━━━━━━━━━━━━━━━━━━
-❌ Failed: site unreachable or error occurred
-━━━━━━━━━━━━━━━━━━━━━━
-"@
-    Set-Content -Path $logPath -Value $message -Force
+    $message = "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
+    Set-Content -Path $logPath -Value $message
     exit 8
 }
