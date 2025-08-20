@@ -50,14 +50,22 @@ try {
 
     $timeOnly = Get-Date -Format "HH:mm"
 
-    $summary = @" 
-    ````
+# Pad each value to fixed width
+$timeCol   = $timeOnly.PadRight(8)
+$onlineCol = $online.PadRight(6)
+$totalCol  = ($count + " " + $marker).PadRight(10)
+$newCol    = ("+" + $joinedToday).PadRight(9)
+$peakCol   = $peakCount.PadRight(6)
+
+$summary = @"
+```
+
 ━━━━━━━ Player Stats ━━━━━━━
 
-| Time (GMT) | Online |   Total   | New Today | Peak Time |
-|   $timeOnly    |   $online   |   $count $marker  |    +$joinedToday    |    $peakCount     |
-
-````
+| Time (GMT) | Online | Total     | New Today | Peak  |
+|------------|--------|-----------|-----------|-------|
+| $timeCol   | $onlineCol | $totalCol | $newCol    | $peakCol |
+```
 "@
 
     Set-Content -Path $logPath -Value $summary -Force
