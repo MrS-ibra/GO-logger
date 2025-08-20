@@ -69,7 +69,7 @@ catch {
     $logPath = "lifetime_log.txt"
     $message = @"
 ━━━━━━━━━━━━━━━━━━━━━━
-❌ Scrape failed: site unreachable or error occurred
+❌ Failed: site unreachable or error occurred
 ━━━━━━━━━━━━━━━━━━━━━━
 "@
     Set-Content -Path $logPath -Value $message
