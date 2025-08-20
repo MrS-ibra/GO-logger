@@ -58,14 +58,13 @@ $newCol    = ("+" + $joinedToday).PadRight(9)
 $peakCol   = $peakCount.PadRight(6)
 
 $summary = @"
-```
-
+````
 ━━━━━━━ Player Stats ━━━━━━━
 
 | Time (GMT) | Online | Total     | New Today | Peak  |
 |------------|--------|-----------|-----------|-------|
 | $timeCol   | $onlineCol | $totalCol | $newCol    | $peakCol |
-```
+````
 "@
 
     Set-Content -Path $logPath -Value $summary -Force
