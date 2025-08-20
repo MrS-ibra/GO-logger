@@ -51,9 +51,9 @@ try {
     $timeOnly = Get-Date -Format "HH:mm"
 
 # Pad each value to fixed width
-$timeCol   = $timeOnly.PadRight(8)
+$timeCol   = $timeOnly.PadRight(6)
 $onlineCol = $online.PadRight(6)
-$totalCol  = ($count + " " + $marker).PadRight(9)
+$totalCol  = ($count + " " + $marker).PadRight(6)
 $newCol    = ("+" + $joinedToday).PadRight(8)
 $peakCol   = $peakCount.PadRight(6)
 
@@ -61,9 +61,12 @@ $summary = @"
 ````
 ━━━━━━━ Player Stats ━━━━━━━
 
-| Time (GMT) | Online | Total     | New Today | Peak  |
-|------------|--------|-----------|-----------|-------|
-| $timeCol   | $onlineCol | $totalCol | $newCol    | $peakCol |
+|Time (GMT)| Online | Total  | 
+|----------|--------|--------|
+| $timeCol   | $onlineCol | $totalCol |
+New Today | Peak  |
+-----------|-------|
+ $newCol    | $peakCol |
 ````
 "@
 
