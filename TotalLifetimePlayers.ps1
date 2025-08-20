@@ -53,9 +53,9 @@ try {
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        $peakLine = "Peak time today: $peakTime GMT — $peakCount players"
+        $peakLine = "**Peak time today**: $peakTime (GMT) — $peakCount players"
     } else {
-        $peakLine = "Peak time today: not recorded ❔"
+        $peakLine = "**Peak time today**: not recorded ❔"
     }
 
     $joinedToday = 0
@@ -77,10 +77,10 @@ try {
 
     $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
-    $line1 = "━━━━Time (GMT: $timeOnly━━━━━━"
-    $line2 = "Lifetime players: $count."
-    $line3 = "Online players: $online"
-    $line4 = "Joined Today: +$joinedToday"
+    $line1 = "━━━━━━━━**Time (GMT)**: $timeOnly━━━━━━━━"
+    $line2 = "**Lifetime players**: $count"
+    $line3 = "**Online players**: $online"
+    $line4 = "**Joined Today**: +$joinedToday"
     $line5 = $peakLine
     $line6 = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
