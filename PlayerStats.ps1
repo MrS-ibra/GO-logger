@@ -56,7 +56,7 @@ try {
 | Time (GMT) | Online | Total     | New Today | Peak |
 |------------|--------|-----------|-----------|------|
 | $timeOnly  | $online | $count $marker | +$joinedToday | $peakCount |
-``` "@
+```` "@
 
     Set-Content -Path $logPath -Value $summary -Force
 }
