@@ -6,6 +6,7 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
     steps:
       - name: Install PowerShell 7.4.1
         run: |
@@ -24,8 +25,8 @@ jobs:
         run: |
           git config --global user.name "IbraBot"
           git config --global user.email "ibra@example.com"
-          git add lifetime_log.txt peak_log.txt daily_totals.txt
-          git commit -m "Update logs" || echo "No changes to commit"
+          git add lifetime_log.txt peak_log.txt
+          git commit -m "Update lifetime and peak logs" || echo "No changes to commit"
           git push
 
       - name: Send Lifetime Log to Discord
@@ -38,21 +39,3 @@ jobs:
                -X POST \
                -d "{\"content\": \"$message\"}" \
                $DISCORD_WEBHOOK
-
-  send-yesterday-stats:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install PowerShell 7.4.1
-        run: |
-          wget https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell-7.4.1-linux-x64.tar.gz
-          mkdir ~/powershell && tar -xvf ./powershell-7.4.1-linux-x64.tar.gz -C ~/powershell
-
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Send Yesterday Stats to Discord
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: ~/powershell/pwsh "./SendYesterdayStats.ps1"
