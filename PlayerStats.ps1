@@ -33,9 +33,9 @@ try {
     $peakLine = if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        "**Today’s peak**: $peakTime (GMT) — $peakCount players"
+        "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     } else {
-        "**Today’s peak**: not recorded ❔"
+        "**📈 Peak not recorded ❔"
     }
 
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
@@ -52,9 +52,9 @@ try {
 
     $timeOnly = Get-Date -Format "HH:mm"
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "**Total players**: $count$marker"
-    $line3 = "**Online players**: $online"
-    $line4 = "**New players today**: +$joinedToday"
+    $line2 = "👥** $count ** total $marker"
+    $line3 = "🟢** $online ** online"
+    $line4 = "🆕** +$joinedToday **today"
     $line5 = $peakLine
 
     Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
