@@ -50,7 +50,7 @@ try {
 
     # Final output
     $output = @(
-        "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
+        "━━━━━━** Time (GMT): $timeOnly **━━━━━━"
         "👥** $count ** total$marker"
         "🟢** $online ** online"
         "🆕** +$joinedToday **today"
