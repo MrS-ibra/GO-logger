@@ -10,8 +10,8 @@ try {
 
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
 
-    $logPath = "lifetime_log.txt"
-    $peakLog = "peak_log.txt"
+    $logPath = "NewStats.txt"
+    $peakLog = "StatsHistory.txt"
 
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
@@ -60,7 +60,7 @@ try {
     Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
-    $logPath = "lifetime_log.txt"
+    $logPath = "NewStats.txt"
     $message = "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
     Set-Content -Path $logPath -Value $message
     exit 8
