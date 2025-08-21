@@ -15,7 +15,7 @@ try {
 
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
-        if ($logLines.Count -ge 1500) {
+        if ($logLines.Count -ge 1000) {
             $logLines = $logLines[10..($logLines.Count - 1)]
             Set-Content -Path $peakLog -Value $logLines
         }
