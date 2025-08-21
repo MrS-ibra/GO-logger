@@ -65,17 +65,3 @@ catch {
     Set-Content -Path $logPath -Value $message
     exit 8
 }
-
-# Extract last entry of today
-$lastTodayEntry = $peakTodayLines[-1]
-$todayDate = Get-Date -Format "yyyy-MM-dd"
-
-# Check if today's entry already exists
-$dailyLogPath = "daily_totals.txt"
-$existingDaily = if (Test-Path $dailyLogPath) { Get-Content $dailyLogPath } else { @() }
-$alreadyLogged = $existingDaily | Where-Object { $_ -match "^$todayDate" }
-
-if (-not $alreadyLogged -and $lastTodayEntry) {
-    Add-Content -Path $dailyLogPath -Value $lastTodayEntry
-}
-
