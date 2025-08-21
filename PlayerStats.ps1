@@ -1,34 +1,30 @@
 try {
     $url = "https://www.playgenerals.online/players"
-
-    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
-    $html = $response.Content
-    $html | Out-File -FilePath "raw_dump.txt"
+    $response = Invoke-RestMethod -Uri $url -ErrorAction Stop
+    $html = $response.ToString()
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count = $count.Trim() -replace '[^\d]', ''  # Remove non-digit characters
+    $count = $count.Trim() -replace '[^\d]', ''
 
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
 
     $logPath = "NewStats.txt"
     $peakLog = "StatsHistory.txt"
-
-    if (Test-Path $peakLog) {
-        $logLines = Get-Content $peakLog
-        if ($logLines.Count -ge 400) {
-            $logLines = $logLines[10..($logLines.Count - 1)]
-            Set-Content -Path $peakLog -Value $logLines
-        }
-    }
-
-    Add-Content -Path $peakLog -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
-
-    $peakLogLines = Get-Content $peakLog
     $today = Get-Date -Format "yyyy-MM-dd"
-    $peakTodayLines = $peakLogLines | Where-Object {
-        $_ -match "^$today" -and ($_ -split ",").Count -ge 3
+
+    # Load and filter today's entries only
+    $peakTodayLines = @()
+    if (Test-Path $peakLog) {
+        $allLines = Get-Content $peakLog
+        $peakTodayLines = $allLines | Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
     }
 
+    # Append new entry
+    $newEntry = "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
+    $peakTodayLines += $newEntry
+    Set-Content -Path $peakLog -Value $peakTodayLines
+
+    # Peak logic
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
     $peakLine = if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
@@ -38,6 +34,7 @@ try {
         "**📈 Peak not recorded ❔"
     }
 
+    # Joined today logic
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2])
     } else { 0 }
