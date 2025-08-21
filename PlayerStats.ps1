@@ -24,23 +24,31 @@ try {
     $logPath = "NewStats.txt"
     $peakLog = "StatsHistory.txt"
 
+    # Read today's entries from history
     $peakTodayLines = if (Test-Path $peakLog) {
         Get-Content $peakLog | Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
     } else { @() }
 
+    # Create new entry and append it
     $newEntry = "$today $timeOnly,$online,$count"
     $allEntries = $peakTodayLines + $newEntry
     Set-Content -Path $peakLog -Value $allEntries
 
+    # ✅ FIX: Update peakTodayLines to include the new entry
+    $peakTodayLines = $allEntries
+
+    # Calculate joined today
     $joinedToday = ($peakTodayLines.Count -ge 2) ?
         [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2]) : 0
 
+    # Compare with previous count to detect increase
     $previousCount = ($peakTodayLines.Count -ge 2) ?
         [int](($peakTodayLines[-2] -split ",")[2]) : [int]$count
 
     $marker = ([int]$count -gt $previousCount) ? " ⬆️" : ""
     $peakLine = Get-PeakLine $allEntries
 
+    # Final output
     $output = @(
         "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
         "👥** $count ** total$marker"
