@@ -25,7 +25,10 @@ try {
     $peakLog = "StatsHistory.txt"
 
     $peakTodayLines = if (Test-Path $peakLog) {
-        Get-Content $peakLog | Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
+        Get-Content $peakLog -Raw -ErrorAction SilentlyContinue |
+        Select-String "^$today" |
+        ForEach-Object { $_.Line } |
+        Where-Object { ($_ -split ",").Count -ge 3 }
     } else { @() }
 
     $newEntry = "$today $timeOnly,$online,$count"
