@@ -25,7 +25,7 @@ jobs:
         run: |
           git config --global user.name "IbraBot"
           git config --global user.email "ibra@example.com"
-          git add lifetime_log.txt peak_log.txt
+          git add NewStats.txt StatsHistory.txt
           git commit -m "Update lifetime and peak logs" || echo "No changes to commit"
           git push
 
@@ -34,7 +34,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          message=$(awk 'NF' lifetime_log.txt | awk '{print}' ORS='\\n')
+          message=$(awk 'NF' NewStats.txt | awk '{print}' ORS='\\n')
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$message\"}" \
