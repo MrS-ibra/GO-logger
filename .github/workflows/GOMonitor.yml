@@ -6,6 +6,7 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Checkout Repo
@@ -13,9 +14,8 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-          - name: Show PowerShell Version
-  run: pwsh -Command '$PSVersionTable.PSVersion'
-
+      - name: Show PowerShell Version
+        run: pwsh -Command '$PSVersionTable.PSVersion'
 
       - name: Run Tracker
         run: pwsh ./PlayerStats.ps1
