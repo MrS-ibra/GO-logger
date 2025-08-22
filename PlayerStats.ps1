@@ -1,97 +1,69 @@
-function Get-PeakLine($entries) {
-    $peakEntry = $entries |
-        Sort-Object { ($_ -split ",")[1] -as [int] } -Descending |
-        Select-Object -First 1
+try {
+    $url = "https://www.playgenerals.online/players"
 
-    if ($peakEntry) {
+    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
+    $html = $response.Content
+    $html | Out-File -FilePath "raw_dump.txt"
+
+    $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
+    $count = $count.Trim() -replace '[^\d]', ''  #  Remove non-digit characters
+
+    $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
+
+    $logPath = "StatsHistory.txt"
+    $peakLog = "NewStats.txt"
+
+    if (Test-Path $peakLog) {
+        $logLines = Get-Content $peakLog
+        if ($logLines.Count -ge 180) {
+            $logLines = $logLines[10..($logLines.Count - 1)]
+            Set-Content -Path $peakLog -Value $logLines
+        }
+    }
+
+    Add-Content -Path $peakLog -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
+
+    $peakLogLines = Get-Content $peakLog
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $peakTodayLines = $peakLogLines | Where-Object {
+        $_ -match "^$today" -and ($_ -split ",").Count -ge 3
+    }
+
+    $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
+    $peakLine = if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        return "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
-    }
-
-    return "**📈 Peak not recorded ❔"
-}
-
-try {
-    $url      = "https://www.playgenerals.online/players"
-    $response = Invoke-RestMethod -Uri $url -ErrorAction Stop
-    $html     = $response.ToString()
-
-    $count  = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count  = $count.Trim() -replace '[^\d]', ''
-    $online = ($html -match "There are (\d+) online player") ? $matches[1] : "0"
-
-    $now      = [datetime]::Now
-    $today    = $now.ToString("yyyy-MM-dd")
-    $timeOnly = $now.ToString("HH:mm")
-
-    $logPath = "NewStats.txt"
-    $peakLog = "StatsHistory.txt"
-
-    # 1. Read entire history (all dates)
-    $historyLines = if (Test-Path $peakLog) {
-        Get-Content $peakLog
+        "**Today’s peak**: $peakTime (GMT) — $peakCount players"
     } else {
-        @()
+        "**Today’s peak**: not recorded ❔"
     }
 
-    # 2. Extract only today's lines (three columns: date, online, total)
-    $peakTodayLines = $historyLines |
-        Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
-
-    # 3. Build the new entry
-    $newEntry = "$today $timeOnly,$online,$count"
-
-    # 4. Append the new entry to full history
-    $historyLines += $newEntry
-
-    # 5. If history exceeds 500 lines, drop the oldest 25
-    if ($historyLines.Count -gt 500) {
-        $historyLines = $historyLines | Select-Object -Skip 25
-    }
-
-    # 6. Write trimmed history back to StatsHistory.txt
-    [System.IO.File]::WriteAllLines($peakLog, $historyLines)
-
-    # 7. Refresh today's lines to include the new entry
-    $peakTodayLines = $historyLines |
-        Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
-
-    # 8. Compute joinedToday based on first and last of today's lines
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
-        [int](($peakTodayLines[-1] -split ",")[2]) -
-        [int](($peakTodayLines[0]  -split ",")[2])
-    } else {
-        0
-    }
+        [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2])
+    } else { 0 }
 
-    # 9. Determine marker (⬆️) if this run increased lifetime total
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
     } else {
         [int]$count
     }
 
-    $marker   = ([int]$count -gt $previousCount) ? " ⬆️" : ""
+    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
 
-    # 10. Build the peak line from today's entries
-    $peakLine = Get-PeakLine $peakTodayLines
+    $timeOnly = Get-Date -Format "HH:mm"
 
-    # 11. Write NewStats.txt for Discord/webhook
-    $output = @(
-        "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-        "👥** $count ** total$marker"
-        "🟢** $online ** online"
-        "🆕** +$joinedToday **today"
-        $peakLine
-    )
-    Set-Content -Path $logPath -Value ($output -join "`n")
+    # ✅ New styled lines with emojis and bold formatting
+    $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
+    $line2 = "👥** $count ** total$marker"
+    $line3 = "🟢** $online ** online"
+    $line4 = "🆕** +$joinedToday **today"
+    $line5 = $peakLine
+
+    Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
-    Set-Content -Path $logPath -Value @"
-━━━━━━━━━━━━━━━━━━━━━━
-❌ Failed: site unreachable or error occurred
-━━━━━━━━━━━━━━━━━━━━━━
-"@
+    $logPath = "StatsHistory.txt"
+    $message = "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
+    Set-Content -Path $logPath -Value $message
     exit 8
 }
