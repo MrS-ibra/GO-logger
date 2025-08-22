@@ -6,12 +6,13 @@ try {
     $html | Out-File -FilePath "raw_dump.txt"
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count = $count.Trim() -replace '[^\d]', ''  #  Remove non-digit characters
+    $count = $count.Trim() -replace '[^\d]', ''  # Remove non-digit characters
 
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
 
-    $logPath = "StatsHistory.txt"
-    $peakLog = "NewStats.txt"
+    # Keep peak log tracking in StatsHistory.txt
+    $peakLog = "StatsHistory.txt"
+    $logPath = "NewStats.txt"   # ✅ Final message will now be written here
 
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
@@ -52,16 +53,18 @@ try {
 
     $timeOnly = Get-Date -Format "HH:mm"
 
+    # Styled message for Discord
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2 = "👥** $count ** total$marker"
     $line3 = "🟢** $online ** online"
     $line4 = "🆕** +$joinedToday **today"
     $line5 = $peakLine
 
+    # ✅ Write final message to NewStats.txt
     Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
-    $logPath = "StatsHistory.txt"
+    $logPath = "NewStats.txt"
     $message = "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
     Set-Content -Path $logPath -Value $message
     exit 8
