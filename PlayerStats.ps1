@@ -17,7 +17,7 @@ try {
     $count = $count.Trim() -replace '[^\d]', ''
     $online = ($html -match "There are (\d+) online player") ? $matches[1] : "0"
 
-    $now = [datetime]::Now
+    $now = [datetime]::UtcNow
     $today = $now.ToString("yyyy-MM-dd")
     $timeOnly = $now.ToString("HH:mm")
 
@@ -31,8 +31,8 @@ try {
     $newEntry = "$today $timeOnly,$online,$count"
     $allEntries = $peakTodayLines + $newEntry
 
-    # ✅ FIX: Ensure each entry is written on its own line
-    Set-Content -Path $peakLog -Value ($allEntries -join "`n")
+    # ✅ FIX: Write each entry on its own line using Out-File
+    $allEntries | Out-File -FilePath $peakLog -Encoding utf8
 
     # ✅ FIX: Include new entry in joinedToday calculation
     $peakTodayLines = $allEntries
