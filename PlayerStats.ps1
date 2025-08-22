@@ -1,11 +1,12 @@
 function Get-PeakLine($entries) {
-    $peakEntry = $entries | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
+    $validEntries = $entries | Where-Object { ($_ -split ",").Count -ge 3 }
+    $peakEntry = $validEntries | Sort-Object { [int]($_ -split ",")[1] } -Descending | Select-Object -First 1
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
         return "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     }
-    return "**📈 Peak not recorded ❔"
+    return "**📈 Peak not recorded ❔**"
 }
 
 try {
@@ -15,7 +16,7 @@ try {
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim() -replace '[^\d]', ''
-    $online = ($html -match "There are (\d+) online player") ? $matches[1] : "0"
+    $online = ($html -match "There are (\d+) online player") ? [int]$matches[1] : 0
 
     $now = [datetime]::Now
     $today = $now.ToString("yyyy-MM-dd")
@@ -24,23 +25,34 @@ try {
     $logPath = "NewStats.txt"
     $peakLog = "StatsHistory.txt"
 
+    # Read today's entries from history
     $peakTodayLines = if (Test-Path $peakLog) {
         Get-Content $peakLog | Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
     } else { @() }
 
+    # Create new entry and append it
     $newEntry = "$today $timeOnly,$online,$count"
     $allEntries = $peakTodayLines + $newEntry
+
+    # ✅ FIX: Write each entry on its own line
     Set-Content -Path $peakLog -Value $allEntries
 
+    # Reassign for downstream logic
+    $peakTodayLines = $allEntries
+
+    # Calculate joined today
     $joinedToday = ($peakTodayLines.Count -ge 2) ?
         [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2]) : 0
 
+    # Compare with previous count to detect increase
     $previousCount = ($peakTodayLines.Count -ge 2) ?
         [int](($peakTodayLines[-2] -split ",")[2]) : [int]$count
 
     $marker = ([int]$count -gt $previousCount) ? " ⬆️" : ""
-    $peakLine = Get-PeakLine $allEntries
 
+    $peakLine = Get-PeakLine $peakTodayLines
+
+    # Final output
     $output = @(
         "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
         "👥** $count ** total$marker"
