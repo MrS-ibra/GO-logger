@@ -30,12 +30,12 @@ try {
         $parts      = $peakEntry -split ","
         $peakTime   = ($parts[0] -split " ")[1]
         $peakCount  = [int]$parts[1]
-        # new-peak if current online equals today’s peak and we’ve seen at least one prior entry
+        # new peak if current online equals today’s peak and we’ve seen at least one prior entry
         $isNewPeak  = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
         $peakLine   = "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players" + ($(if ($isNewPeak) { " 🔺" } else { "" }))
     }
     else {
-        $peakLine   = "**Today’s peak**: not recorded ❔"
+        $peakLine   = "**Today’s peak** not recorded ❔"
         $isNewPeak  = $false
     }
 
@@ -50,7 +50,7 @@ try {
     } else { [int]$count }
     $marker      = if ([int]$count -gt $prevCount) { " ⬆️" } elseif ([int]$count -lt $prevCount) { " 🔻" } else { "" }
 
-    # final Discord lines (unchanged)
+    #  Discord message
     $timeOnly = Get-Date -Format "HH:mm"
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2    = "👥** $count ** total$marker"
