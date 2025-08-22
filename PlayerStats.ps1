@@ -3,7 +3,6 @@ try {
 
     $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
     $html = $response.Content
-    $html | Out-File -FilePath "raw_dump.txt"
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim() -replace '[^\d]', ''  # Remove non-digit characters
