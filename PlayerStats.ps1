@@ -1,142 +1,71 @@
-param(
-    [string]$Url      = "https://www.playgenerals.online/players",
-    [string]$HistPath = "StatsHistory.txt",
-    [string]$OutPath  = "NewStats.txt"
-)
-
-Set-StrictMode -Version Latest
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-function Invoke-WithRetry {
-    param(
-        [Parameter(Mandatory)][string]$Uri,
-        [int]$MaxRetries   = 3,
-        [int]$DelaySec     = 5,
-        [string]$UserAgent = "TelemetryBot/1.0"
-    )
-    for ($i = 1; $i -le $MaxRetries; $i++) {
-        try {
-            return Invoke-WebRequest `
-                -Uri $Uri `
-                -UseBasicParsing `
-                -TimeoutSec 30 `
-                -UserAgent $UserAgent `
-                -ErrorAction Stop
-        }
-        catch {
-            if ($i -lt $MaxRetries) { Start-Sleep -Seconds $DelaySec }
-            else { throw $_ }
-        }
-    }
-}
-
-function Write-Log {
-    param(
-        [string]$Message,
-        [string]$Level   = "INFO",
-        [string]$LogFile = "script.log"
-    )
-    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "$ts [$Level] $Message" | Out-File -FilePath $LogFile -Append -Encoding UTF8
-}
-
-function Parse-Stats {
-    param([string]$Html)
-
-    $rawCount = ($Html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
-    $count    = ($rawCount.Trim() -replace '[^\d]', '')
-    if (-not ($count -match '^\d+$')) { throw "Invalid total players value: '$rawCount'" }
-
-    if ($Html -match "There are (\d+) online player") {
-        $online = $matches[1] -replace '[^\d]', ''
-    }
-    else { $online = "0" }
-
-    return [PSCustomObject]@{
-        Count        = [int]$count
-        Online       = [int]$online
-        TimeOnly     = (Get-Date -Format "HH:mm")
-    }
-}
-
-function Update-History {
-    param(
-        [PSCustomObject]$Stats,
-        [string]        $HistFile
-    )
-
-    if (-not (Test-Path $HistFile)) {
-        New-Item -Path $HistFile -ItemType File | Out-Null
-    }
-
-    $lines = Get-Content -Path $HistFile
-    if ($lines.Count -ge 180) {
-        $lines = $lines[10..($lines.Count - 1)]
-        Set-Content -Path $HistFile -Value $lines -Encoding UTF8
-    }
-
-    $ts    = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $entry = "$ts,$($Stats.Online),$($Stats.Count)"
-    Add-Content -Path $HistFile -Value $entry
-
-    $today      = Get-Date -Format "yyyy-MM-dd"
-    $todayLines = Get-Content $HistFile | Where-Object { $_ -match "^$today" }
-
-    if ($todayLines) {
-        $peakLine = $todayLines |
-            Sort-Object {[int]($_ -split ',')[1]} -Descending |
-            Select-Object -First 1
-        $parts           = $peakLine -split ','
-        $Stats.PeakTime  = ($parts[0] -split ' ')[1]
-        $Stats.PeakCount = [int]$parts[1]
-    }
-
-    if ($todayLines.Count -ge 2) {
-        $firstTotal        = [int](($todayLines[0] -split ',')[2])
-        $lastTotal         = [int](($todayLines[-1] -split ',')[2])
-        $Stats.JoinedToday = $lastTotal - $firstTotal
-        $prevTotal         = [int](($todayLines[-2] -split ',')[2])
-    }
-    else {
-        $Stats.JoinedToday = 0
-        $prevTotal         = $Stats.Count
-    }
-
-    $Stats.Marker = if ($Stats.Count -gt $prevTotal) { " ⬆️" } else { "" }
-    return $Stats
-}
-
-function Build-Message {
-    param([PSCustomObject]$Stats)
-
-    $line1 = "**━━━━━━━Time (GMT): $($Stats.TimeOnly)━━━━━━━**"
-    $line2 = "👥** $($Stats.Count) ** total$($Stats.Marker)"
-    $line3 = "🟢** $($Stats.Online) ** online"
-    $line4 = "🆕** +$($Stats.JoinedToday) **today"
-    if ($Stats.PeakCount) {
-        $line5 = "📈 Peak ** $($Stats.PeakTime) ** (GMT) — ** $($Stats.PeakCount) ** players"
-    }
-    else {
-        $line5 = "**Today’s peak**: not recorded ❔"
-    }
-
-    return "$line1`n$line2`n$line3`n$line4`n$line5"
-}
-
 try {
-    $resp  = Invoke-WithRetry -Uri $Url
-    $html  = $resp.Content
-    $html | Out-File -FilePath "raw_dump.txt" -Encoding UTF8
+    $url = "https://www.playgenerals.online/players"
 
-    $stats   = Parse-Stats   -Html $html
-    $stats   = Update-History -Stats $stats -HistFile $HistPath
-    $message = Build-Message  -Stats $stats
+    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
+    $html = $response.Content
+    $html | Out-File -FilePath "raw_dump.txt"
 
-    Set-Content -Path $OutPath -Value $message -Encoding UTF8 -Force
+    $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
+    $count = $count.Trim() -replace '[^\d]', ''  # Remove non-digit characters
+
+    $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
+
+    # Keep log tracking in StatsHistory.txt
+    $peakLog = "StatsHistory.txt"
+    $logPath = "NewStats.txt"   
+
+    if (Test-Path $peakLog) {
+        $logLines = Get-Content $peakLog
+        if ($logLines.Count -ge 180) {
+            $logLines = $logLines[10..($logLines.Count - 1)]
+            Set-Content -Path $peakLog -Value $logLines
+        }
+    }
+
+    Add-Content -Path $peakLog -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
+
+    $peakLogLines = Get-Content $peakLog
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $peakTodayLines = $peakLogLines | Where-Object {
+        $_ -match "^$today" -and ($_ -split ",").Count -ge 3
+    }
+
+    $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
+    $peakLine = if ($peakEntry) {
+        $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
+        $peakTime = $peakTime -split " " | Select-Object -Last 1
+        "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
+    } else {
+        "**Today’s peak**: not recorded ❔"
+    }
+
+    $joinedToday = if ($peakTodayLines.Count -ge 2) {
+        [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2])
+    } else { 0 }
+
+    $previousCount = if ($peakTodayLines.Count -ge 2) {
+        [int](($peakTodayLines[-2] -split ",")[2])
+    } else {
+        [int]$count
+    }
+
+    $marker = if ([int]$count -gt $previousCount) { " ⬆️" } else { "" }
+
+    $timeOnly = Get-Date -Format "HH:mm"
+
+    # Discord Message
+    $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
+    $line2 = "👥** $count ** total$marker"
+    $line3 = "🟢** $online ** online"
+    $line4 = "🆕** +$joinedToday **today"
+    $line5 = $peakLine
+
+    # Write final message to NewStats.txt
+    Set-Content -Path $logPath -Value "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
-    Write-Log -Message $_.Exception.Message -Level "ERROR"
-    $fallback = "❌ Failed to scrape stats at $(Get-Date -Format 'u')"
-    Set-Content -Path $OutPath -Value $fallback -Encoding UTF8 -Force
-    exit 1
+    $logPath = "NewStats.txt"
+    $message = "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
+    Set-Content -Path $logPath -Value $message
+    exit 8
 }
