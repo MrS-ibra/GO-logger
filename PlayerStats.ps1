@@ -52,7 +52,6 @@ try {
 
     $timeOnly = Get-Date -Format "HH:mm"
 
-    # ✅ New styled lines with emojis and bold formatting
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2 = "👥** $count ** total$marker"
     $line3 = "🟢** $online ** online"
