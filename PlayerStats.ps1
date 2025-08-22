@@ -1,11 +1,12 @@
 function Get-PeakLine($entries) {
-    $peakEntry = $entries | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
+    $validEntries = $entries | Where-Object { ($_ -split ",").Count -ge 3 }
+    $peakEntry = $validEntries | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
         return "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     }
-    return "**📈 Peak not recorded ❔"
+    return "**📈 Peak not recorded ❔**"
 }
 
 try {
@@ -15,7 +16,7 @@ try {
 
     $count = ($html -split "Total Lifetime Players:")[1] -split "<" | Select-Object -First 1
     $count = $count.Trim() -replace '[^\d]', ''
-    $online = ($html -match "There are (\d+) online player") ? $matches[1] : "0"
+    $online = ($html -match "There are (\d+) online player") ? [int]$matches[1] : 0
 
     $now = [datetime]::Now
     $today = $now.ToString("yyyy-MM-dd")
@@ -34,7 +35,7 @@ try {
     $allEntries = $peakTodayLines + $newEntry
     Set-Content -Path $peakLog -Value $allEntries
 
-    # ✅ FIX: Update peakTodayLines to include the new entry
+    # ✅ Ensure peak logic includes latest entry
     $peakTodayLines = $allEntries
 
     # Calculate joined today
@@ -46,7 +47,12 @@ try {
         [int](($peakTodayLines[-2] -split ",")[2]) : [int]$count
 
     $marker = ([int]$count -gt $previousCount) ? " ⬆️" : ""
-    $peakLine = Get-PeakLine $allEntries
+
+    # 🔺 Optional: Add peak marker if new high
+    $previousPeak = ($peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1) -split ",")[1]
+    $peakMarker = ($online -gt [int]$previousPeak) ? " 🔺" : ""
+
+    $peakLine = "📈 Peak ** $timeOnly ** (GMT) — ** $online ** players$peakMarker"
 
     # Final output
     $output = @(
