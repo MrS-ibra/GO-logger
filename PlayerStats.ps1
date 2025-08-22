@@ -30,23 +30,24 @@ try {
         $_ -match "^$today" -and ($_ -split ",").Count -ge 3
     }
 
+    # Determine today's peak
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
-
-    # Determine if current peak is a new all time high
-    $allPeakLines = $peakLogLines | Where-Object { ($_ -split ",").Count -ge 2 }
-    $historicalPeak = ($allPeakLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1)
-    $historicalPeakCount = [int](($historicalPeak -split ",")[1])
-    $isNewPeakToday = $peakEntry -and ([int](($peakEntry -split ",")[1]) -ge $historicalPeakCount)
-
-    $peakLine = if ($peakEntry) {
+    if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        $emoji = if ($isNewPeakToday) { " ⚡" } else { "" }
-        "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players$emoji"
-    } else {
-        "**Today’s peak**: not recorded ❔"
+
+        # Highlight if current online count is the new peak
+        $isNewPeak = ([int]$online -eq [int]$peakCount -and $peakTodayLines.Count -gt 1)
+        $peakEmoji = if ($isNewPeak) { " 🔺" } else { "" }
+
+        $peakLine = "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players$peakEmoji"
+    }
+    else {
+        $peakLine = "**Today’s peak**: not recorded ❔"
+        $isNewPeak = $false
     }
 
+    # Joined today calculation
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-1] -split ",")[2]) - [int](($peakTodayLines[0] -split ",")[2])
     } else { 0 }
@@ -64,7 +65,7 @@ try {
     # Discord Message
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2 = "👥** $count ** total$marker"
-    $line3 = "🟢** $online ** online"
+    $line3 = "🟢** $online ** online" + ($(if ($isNewPeak) { " 🔺" } else { "" }))
     $line4 = "🆕** +$joinedToday **today"
     $line5 = $peakLine
 
