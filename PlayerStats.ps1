@@ -1,15 +1,11 @@
-function Get-PeakLine {
-    param ($entries)
-
+function Get-PeakLine($entries) {
     $validEntries = $entries | Where-Object { ($_ -split ",").Count -ge 3 }
-    $peakEntry = $validEntries | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
-
+    $peakEntry = $validEntries | Sort-Object { [int]($_ -split ",")[1] } -Descending | Select-Object -First 1
     if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
         return "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     }
-
     return "**📈 Peak not recorded ❔**"
 }
 
@@ -37,6 +33,7 @@ try {
     $allEntries = $peakTodayLines + $newEntry
     Set-Content -Path $peakLog -Value $allEntries
 
+    # Reassign to include new entry for all downstream logic
     $peakTodayLines = $allEntries
 
     $joinedToday = ($peakTodayLines.Count -ge 2) ?
@@ -47,13 +44,10 @@ try {
 
     $marker = ([int]$count -gt $previousCount) ? " ⬆️" : ""
 
-    $previousPeak = ($peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1) -split ",")[1]
-    $peakMarker = ($online -gt [int]$previousPeak) ? " 🔺" : ""
-
-    $peakLine = "📈 Peak ** $timeOnly ** (GMT) — ** $online ** players$peakMarker"
+    $peakLine = Get-PeakLine $peakTodayLines
 
     $output = @(
-        "━━━━━━** Time (GMT): $timeOnly **━━━━━━"
+        "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
         "👥** $count ** total$marker"
         "🟢** $online ** online"
         "🆕** +$joinedToday **today"
@@ -63,11 +57,10 @@ try {
     Set-Content -Path $logPath -Value ($output -join "`n")
 }
 catch {
-    $errorMessage = @"
+    Set-Content -Path "NewStats.txt" -Value @"
 ━━━━━━━━━━━━━━━━━━━━━━
 ❌ Failed: site unreachable or error occurred
 ━━━━━━━━━━━━━━━━━━━━━━
 "@
-    Set-Content -Path "NewStats.txt" -Value $errorMessage
     exit 8
 }
