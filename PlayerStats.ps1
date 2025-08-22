@@ -64,7 +64,7 @@ try {
     )
 
     Set-Content -Path $logPath -Value ($output -join "`n")
-}
+} # ← This was missing
 catch {
     Set-Content -Path "NewStats.txt" -Value @"
 ━━━━━━━━━━━━━━━━━━━━━━
