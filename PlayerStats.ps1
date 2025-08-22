@@ -10,9 +10,9 @@ try {
 
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { "0" }
 
-    # Keep peak log tracking in StatsHistory.txt
+    # Keep log tracking in StatsHistory.txt
     $peakLog = "StatsHistory.txt"
-    $logPath = "NewStats.txt"   # ✅ Final message will now be written here
+    $logPath = "NewStats.txt"   
 
     if (Test-Path $peakLog) {
         $logLines = Get-Content $peakLog
@@ -34,7 +34,7 @@ try {
     $peakLine = if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        "**Today’s peak**: $peakTime (GMT) — $peakCount players"
+        "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     } else {
         "**Today’s peak**: not recorded ❔"
     }
