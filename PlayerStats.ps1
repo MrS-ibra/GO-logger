@@ -30,9 +30,11 @@ try {
 
     $newEntry = "$today $timeOnly,$online,$count"
     $allEntries = $peakTodayLines + $newEntry
-    Set-Content -Path $peakLog -Value $allEntries
 
-    # ✅ FIX: include new entry in joinedToday calculation
+    # ✅ FIX: Ensure each entry is written on its own line
+    Set-Content -Path $peakLog -Value ($allEntries -join "`n")
+
+    # ✅ FIX: Include new entry in joinedToday calculation
     $peakTodayLines = $allEntries
 
     $joinedToday = ($peakTodayLines.Count -ge 2) ?
