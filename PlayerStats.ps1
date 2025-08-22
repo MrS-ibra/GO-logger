@@ -31,10 +31,18 @@ try {
     }
 
     $peakEntry = $peakTodayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
+
+    # Determine if current peak is a new all time high
+    $allPeakLines = $peakLogLines | Where-Object { ($_ -split ",").Count -ge 2 }
+    $historicalPeak = ($allPeakLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1)
+    $historicalPeakCount = [int](($historicalPeak -split ",")[1])
+    $isNewPeakToday = $peakEntry -and ([int](($peakEntry -split ",")[1]) -ge $historicalPeakCount)
+
     $peakLine = if ($peakEntry) {
         $peakTime, $peakCount = ($peakEntry -split ",")[0,1]
         $peakTime = $peakTime -split " " | Select-Object -Last 1
-        "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
+        $emoji = if ($isNewPeakToday) { " ⚡" } else { "" }
+        "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players$emoji"
     } else {
         "**Today’s peak**: not recorded ❔"
     }
