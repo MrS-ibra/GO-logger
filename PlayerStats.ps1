@@ -32,7 +32,7 @@ try {
         $peakCount  = [int]$parts[1]
         # new peak if current online equals today’s peak and we’ve seen at least one prior entry
         $isNewPeak  = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
-        $peakLine   = "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players" + ($(if ($isNewPeak) { " 🔺" } else { "" }))
+        $peakLine   = "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     }
     else {
         $peakLine   = "**Today’s peak** not recorded ❔"
