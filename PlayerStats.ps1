@@ -63,10 +63,11 @@ try {
     Set-Content -Path $logPath -Value ($output -join "`n")
 }
 catch {
-    Set-Content -Path "NewStats.txt" -Value @"
+    $errorMessage = @"
 ━━━━━━━━━━━━━━━━━━━━━━
 ❌ Failed: site unreachable or error occurred
 ━━━━━━━━━━━━━━━━━━━━━━
 "@
+    Set-Content -Path "NewStats.txt" -Value $errorMessage
     exit 8
 }
