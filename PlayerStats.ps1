@@ -39,12 +39,12 @@ try {
         $isNewPeak  = $false
     }
 
-    # how many joined today (delta of lifetime count)
+    # how many joined today 
     $joinedToday = if ($todayLines.Count -ge 2) {
         [int](($todayLines[-1] -split ",")[2]) - [int](($todayLines[0] -split ",")[2])
     } else { 0 }
 
-    # total count arrow (lifetime)
+    # total count arrow 
     $prevCount   = if ($todayLines.Count -ge 2) {
         [int](($todayLines[-2] -split ",")[2])
     } else { [int]$count }
@@ -54,13 +54,13 @@ try {
     $timeOnly = Get-Date -Format "HH:mm"
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2    = "👥** $count ** total$marker"
-    $line3    = "🟢** $online ** online" + ($(if ($isNewPeak) { " 🔺" } else { "" }))
+    $line3    = "🟢** $online ** online" + ($(if ($isNewPeak) { " ⬆️" } else { "" }))
     $line4    = "🆕** +$joinedToday **today"
     $line5    = $peakLine
 
     Set-Content $logPath "$line1`n$line2`n$line3`n$line4`n$line5"
 }
 catch {
-    Set-Content "NewStats.txt" "━━━━━━━━━━━━━━━━━━━━━━`n❌ Failed: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
+    Set-Content "NewStats.txt" "━━━━━━━━━━━━━━━━━━━━━━`n❌** Failed **: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
     exit 8
 }
