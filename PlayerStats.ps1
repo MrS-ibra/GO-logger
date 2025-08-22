@@ -21,50 +21,41 @@ try {
     $count  = $count.Trim() -replace '[^\d]', ''
     $online = ($html -match "There are (\d+) online player") ? $matches[1] : "0"
 
-    $now       = [datetime]::UtcNow
-    $today     = $now.ToString("yyyy-MM-dd")
-    $timeOnly  = $now.ToString("HH:mm")
+    $now      = [datetime]::UtcNow
+    $today    = $now.ToString("yyyy-MM-dd")
+    $timeOnly = $now.ToString("HH:mm")
 
-    $logPath  = "NewStats.txt"
-    $peakLog  = "StatsHistory.txt"
+    $logPath = "NewStats.txt"
+    $peakLog = "StatsHistory.txt"
 
-    # Read only today's lines with three columns
+    # grab only today’s valid lines, if any
     $peakTodayLines = if (Test-Path $peakLog) {
         Get-Content $peakLog |
           Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -ge 3 }
-    } else {
-        @()
-    }
+    } else { @() }
 
-    # Build new entry and full list
     $newEntry   = "$today $timeOnly,$online,$count"
     $allEntries = $peakTodayLines + $newEntry
 
-    # --- FIX: Write each entry as its own line ---
-    [System.IO.File]::WriteAllLines($peakLog, $allEntries)
+    # --- FORCE CRLF between entries ---
+    $crlfJoined = $allEntries -join "`r`n"
+    [System.IO.File]::WriteAllText($peakLog, $crlfJoined, [Text.Encoding]::UTF8)
 
-    # Reassign so joinedToday includes the new entry
+    # recalc with the new entry present
     $peakTodayLines = $allEntries
 
-    # Compute joined today
     $joinedToday = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-1] -split ",")[2]) -
         [int](($peakTodayLines[0]  -split ",")[2])
-    } else {
-        0
-    }
+    } else { 0 }
 
-    # Compare to previous count for marker
     $previousCount = if ($peakTodayLines.Count -ge 2) {
         [int](($peakTodayLines[-2] -split ",")[2])
-    } else {
-        [int]$count
-    }
+    } else { [int]$count }
 
     $marker   = ([int]$count -gt $previousCount) ? " ⬆️" : ""
     $peakLine = Get-PeakLine $allEntries
 
-    # Build NewStats.txt output
     $output = @(
         "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
         "👥** $count ** total$marker"
@@ -73,13 +64,13 @@ try {
         $peakLine
     )
 
-    Set-Content -Path $logPath -Value ($output -join "`n")
+    [System.IO.File]::WriteAllLines($logPath, $output, [Text.Encoding]::UTF8)
 }
 catch {
-    Set-Content -Path $logPath -Value @"
+    [System.IO.File]::WriteAllText($logPath, @"
 ━━━━━━━━━━━━━━━━━━━━━━
 ❌ Failed: site unreachable or error occurred
 ━━━━━━━━━━━━━━━━━━━━━━
-"@
+"@)
     exit 8
 }
