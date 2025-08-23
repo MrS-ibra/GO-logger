@@ -71,11 +71,11 @@ try {
 
     # --- VIP detection with custom messages ---
     $vipMessages = @{
-        'Mr Stratos'   = '🚨 Mr Stratos is online — chilling or playing versus aod as always!'
-        'Kill toll^'   = '🚨 Kill toll^ is online — watch out for the big KT!'
-        '-DoMiNaToR-'  = '🚨 Domi is online and playing his weird 8 player maps!'
-        'OldAnalytics' = '🚨 OldAnalytics is online — stats incoming!'
-        'Add later'    = '🚨 Add later is online — placeholder message.'
+        'Mr Stratos'   = '🚨 Ibra is online, join his halal lounge!'
+        'Kill toll^'   = '🚨 Kill toll is online, watch out for the big KT!'
+        '-DoMiNaToR-' = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
+        'OldAnalytics' = '🚨 OldAnalytics is online, ready to solve your problems!'
+        'Add later'    = '🚨 Add later.'
     }
 
     # Extract player names from HTML
