@@ -65,7 +65,7 @@ try {
     # Discord message
     $timeOnly = Get-Date -Format "HH:mm"
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2    = "👥** $count ** total$marker | ** $online ** 🟢" + ($(if ($isNewPeak) { " ⬆️" } else { "" }))
+    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢" + ($(if ($isNewPeak) { " ⬆️" } else { "" }))
     $line3    = "🆕** +$joinedToday **today"
     $line4    = $peakLine
 
