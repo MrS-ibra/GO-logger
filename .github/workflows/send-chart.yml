@@ -1,0 +1,16 @@
+name: Send Chart to Discord
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Send Chart
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: pwsh ./SendChart.ps1
