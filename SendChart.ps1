@@ -2,7 +2,7 @@
 # Reads StatsHistory.txt, generates a QuickChart PNG, sends it to Discord
 
 param(
-    [string]$WebhookUrl = $env:DISCORD_WEBHOOK,  # set in workflow secrets
+    [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
     [string]$PeakLog    = "StatsHistory.txt",
     [string]$ChartPath  = "TodayTrend.png"
 )
@@ -59,7 +59,6 @@ try {
         file         = Get-Item $ChartPath
     }
 
-    Write-Host "✅ Chart sent to Discord."
 }
 catch {
     Write-Error "❌ Failed: $($_.Exception.Message)"
