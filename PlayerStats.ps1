@@ -71,10 +71,10 @@ try {
     $line5    = $peakLine
 
     # --- VIP detection ---
-    # Define your VIP watchlist (exact names as they appear on the site)
+    # Define VIP watchlist (exact names as they appear on the site)
     $watchList = @(
         'Kill toll^',
-        'WHYY SO BRITISH',
+        'Mr Stratos',
         'bjorn'
         # Add more names here
     )
