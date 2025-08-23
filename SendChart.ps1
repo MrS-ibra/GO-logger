@@ -25,7 +25,7 @@ try {
     $labels = $todayLines | ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
     $data   = $todayLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-    # QuickChart config
+    # QuickChart config with logo overlay
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -41,6 +41,15 @@ try {
             title = @{
                 display = $true
                 text    = "Generals Online — $today"
+            }
+            layout = @{
+                image = @{
+                    src    = "https://imgur.com/a/2pjH0WC"
+                    x      = 10
+                    y      = 10
+                    width  = 50
+                    height = 50
+                }
             }
         }
     } | ConvertTo-Json -Depth 10 -Compress
