@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 
 # 0) CONFIG — make sure this is "https://…"
-$webhookUrl = "https://discord.com/api/webhooks/XXXXXXXXX/XXXXXXXXXXXXXXXXXXXX"
+$webhookUrl = "https://discord.com/api/webhooks/1406980157561897021/0CMP5oEuG1mDhIij2k0EjhPq1Cn5xgDlJYZtXwRnM2dzrXouEKrNIyNjwi8afGHq46Ys"
 
 try {
     #
