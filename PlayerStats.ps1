@@ -99,13 +99,13 @@ try {
     if ($vipOnline.Count -gt 0) {
         Add-Content $logPath ""
         if ($vipOnline.Count -eq 1) {
-            Add-Content $logPath ("{0} is online right now! 🔥" -f $vipOnline[0])
+            Add-Content $logPath ("{0} is online right now! 🚨" -f $vipOnline[0])
         }
         else {
             $lastName = $vipOnline[-1]
             $otherNames = $vipOnline[0..($vipOnline.Count - 2)]
             $nameList = ($otherNames -join ', ') + " and " + $lastName
-            Add-Content $logPath ("{0} are online right now! 🔥" -f $nameList) 
+            Add-Content $logPath ("{0} are online right now! 🚨" -f $nameList) 
         }
     }
 
