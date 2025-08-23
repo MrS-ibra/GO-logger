@@ -33,7 +33,7 @@ try {
             datasets = @(@{
                 label       = 'Players Online'
                 data        = $data
-                borderColor = 'green'
+                borderColor = 'blue'
                 fill        = $false
             })
         }
