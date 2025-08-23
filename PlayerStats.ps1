@@ -141,7 +141,7 @@ try {
         try {
             Invoke-WebRequest -Uri "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))" `
                               -OutFile $chartPath -ErrorAction Stop
-            if ((Get-Item $chartPath).Length -gt 2000) { $chartExists = $true }
+            if ((Get-Item $chartPath).Length -gt 500) { $chartExists = $true }
         }
         catch {
             Write-Warning "Chart generation failed: $($_.Exception.Message)"
