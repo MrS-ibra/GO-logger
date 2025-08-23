@@ -1,251 +1,122 @@
-#!/usr/bin/env pwsh
-
-# 0) CONFIG — make sure this is "https://…"
-$webhookUrl = "https://discord.com/api/webhooks/1406980157561897021/0CMP5oEuG1mDhIij2k0EjhPq1Cn5xgDlJYZtXwRnM2dzrXouEKrNIyNjwi8afGHq46Ys"
-
 try {
-    #
-    # 1) FETCH HTML
-    #
-    try {
-        $url      = "https://www.playgenerals.online/players"
-        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
-        $html     = $response.Content
-        Write-Host "✅ Fetched player page HTML."
-    }
-    catch {
-        Write-Warning "Failed to fetch player page: $($_.Exception.Message)"
-        throw
-    }
+    $url     = "https://www.playgenerals.online/players"
+    $html    = (Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop).Content
 
-    #
-    # 2) PARSE STATS
-    #
-    if ($html -match "There are (\d+) online player") {
-        $online = $matches[1]
-    } else {
-        $online = "0"
-    }
-    $count = (($html -split "Total Lifetime Players:")[1] -split "<")[0] -replace '\D','0'
-    Write-Host "Stats – Total: $count  Online: $online"
+    # extract values
+    $count   = (($html -split "Total Lifetime Players:")[1] -split "<")[0] -replace '\D',''
+    $online  = if ($html -match "There are (\d+) online player") { $matches[1] } else { '0' }
 
-    #
-    # 3) LOG HISTORY
-    #
+    # log files
     $peakLog = "StatsHistory.txt"
+    $logPath = "NewStats.txt"
+
+    # trim history to last 190 lines if >200
     if (Test-Path $peakLog) {
         $all = Get-Content $peakLog
         if ($all.Count -ge 200) {
-            Write-Host "Trimming $peakLog to last 190 entries."
-            $all = $all[10..($all.Count - 1)]
-            Set-Content -Path $peakLog -Value $all
-        }
-    }
-    $ts = Get-Date -Format "yyyy-MM-dd HH:mm"
-    Add-Content -Path $peakLog -Value "$ts,$online,$count"
-
-    #
-    # 4) DAILY SNAPSHOT AT 23:59 GMT
-    #
-    $today = Get-Date -Format "yyyy-MM-dd"
-    $now   = Get-Date -Format "HH:mm"
-    if ($now -eq "23:59") {
-        $entries   = Get-Content $peakLog | Where-Object { $_ -like "$today*" }
-        $lastEntry = $entries | Select-Object -Last 1
-        if ($lastEntry) {
-            Set-Content -Path "LastLogOfDay.txt" -Value $lastEntry
-            Write-Host "Wrote last log of day: $lastEntry"
-        }
-        else {
-            Set-Content -Path "LastLogOfDay.txt" -Value "No entries for $today"
-            Write-Host "No entries for $today to write."
+            Set-Content $peakLog $all[10..($all.Count - 1)]
         }
     }
 
-    #
-    # 5) COMPUTE TODAY’S PEAK & JOINED
-    #
-    $todayLines = Get-Content $peakLog | Where-Object {
-        ($_.Split(',')[0] -like "$today*") -and ($_.Split(',').Count -eq 3)
+    # append this run
+    Add-Content $peakLog "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
+
+    # write last log of the day at 23:59 GMT
+    $today = Get-Date -Format 'yyyy-MM-dd'
+    if ((Get-Date -Format 'HH:mm') -eq '23:59') {
+        $todayLast = Get-Content $peakLog |
+                     Where-Object { $_ -match "^$today" } |
+                     Select-Object -Last 1
+        if ($todayLast) {
+            Set-Content "LastLogOfDay.txt" $todayLast
+        } else {
+            Set-Content "LastLogOfDay.txt" "No entries for $today"
+        }
     }
 
-    # Peak
-    $peakEntry = $todayLines |
-        Sort-Object {[int]($_.Split(',')[1])} -Descending |
-        Select-Object -First 1
+    # isolate today’s entries & compute peak
+    $todayLines = Get-Content $peakLog |
+                  Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -eq 3 }
+    $peakEntry  = $todayLines |
+                  Sort-Object { ($_ -split ",")[1] -as [int] } -Descending |
+                  Select-Object -First 1
 
     if ($peakEntry) {
-        $parts       = $peakEntry.Split(',')
-        $peakTime    = $parts[0].Split(' ')[1]
-        $peakCount   = [int]$parts[1]
-        $isNewPeak   = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
-        $peakLine    = "📈 Peak **$peakTime** (GMT) — **$peakCount** players"
-        Write-Host "Today's peak: $peakLine"
-    }
-    else {
-        $peakLine  = "**Today’s peak** not recorded ❔"
+        $p         = $peakEntry -split ","
+        $peakTime  = ($p[0] -split " ")[1]
+        $peakCount = [int]$p[1]
+        $isNewPeak = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
+        $peakLine  = "📈 Peak **$peakTime** (GMT) — **$peakCount** players"
+    } else {
         $isNewPeak = $false
-        Write-Host "No peak entry for today."
+        $peakLine  = "**Today’s peak** not recorded ❔"
     }
 
-    # Joined
+    # how many joined today
     if ($todayLines.Count -ge 2) {
-        $firstCount  = [int]$todayLines[0].Split(',')[2]
-        $lastCount   = [int]$todayLines[-1].Split(',')[2]
-        $joinedToday = $lastCount - $firstCount
-    }
-    else {
+        $joinedToday = [int](($todayLines[-1] -split ",")[2]) - [int](($todayLines[0] -split ",")[2])
+    } else {
         $joinedToday = 0
     }
-    Write-Host "Joined today: +$joinedToday"
 
-    #
-    # 6) BUILD MESSAGE LINES
-    #
-    $timeOnly = Get-Date -Format "HH:mm"
-
+    # arrows for total count
     if ($todayLines.Count -ge 2) {
-        $prevCountVal = [int]$todayLines[-2].Split(',')[2]
+        $prevCount = [int](($todayLines[-2] -split ",")[2])
+    } else {
+        $prevCount = [int]$count
     }
-    else {
-        $prevCountVal = [int]$count
-    }
+    if ([int]$count -gt $prevCount)   { $marker = " ⬆️" }
+    elseif ([int]$count -lt $prevCount) { $marker = " 🔻" }
+    else                                { $marker = "" }
 
-    if ([int]$count -gt $prevCountVal) {
-        $marker = " ⬆️"
-    }
-    elseif ([int]$count -lt $prevCountVal) {
-        $marker = " 🔻"
-    }
-    else {
-        $marker = ""
-    }
+    # build message lines
+    $timeOnly = Get-Date -Format "HH:mm"
+    $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
+    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢" + (if ($isNewPeak) { " ⬆️" } else { "" })
+    $line3    = "🆕** +$joinedToday **today"
+    $line4    = $peakLine
 
-    $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "👥 **$count** total$marker — **$online** Online 🟢"
-    if ($isNewPeak) { $line2 += " ⬆️" }
-    $line3 = "🆕 **+$joinedToday** today"
-    $line4 = $peakLine
-
-    #
-    # 7) VIP DETECTION
-    #
+    # VIP detection (unchanged)
     $vipMessages = @{
-        '-DoMiNaToR-'  = '🚨 Domi is online — the stream is live and the chaos begins!'
-        'Kill toll^'   = "🚨 Kill toll^ is online — watch out for KT's surprises!"
-        'Mr Stratos'   = '🚨 Mr Stratos is online — join his halal lounge!'
-        'OldAnalytics' = '🚨 OldAnalytics is online — ready to solve your problems!'
+        'Mr Stratos'   = '🚨 Ibra is online, join his halal lounge!'
+        'Kill toll^'   = '🚨 Kill toll is online, watch out for the big KT!'
+        '-DoMiNaToR-'  = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
+        'OldAnalytics' = '🚨 OldAnalytics is online, ready to solve your problems!'
         'Add later'    = '🚨 Add later.'
     }
     $vipPriority = @('-DoMiNaToR-','Kill toll^','OldAnalytics','Mr Stratos','Add later')
 
-    $players  = [regex]::Matches($html,"<th\s+scope=['""]row['""]>(.*?)</th>") |
-                ForEach-Object { $_.Groups[1].Value }
-    $vipOnline = @()
-    foreach ($name in $vipMessages.Keys) {
-        if ($players -match ("(?i)^"+[regex]::Escape($name)+"$")) {
-            $vipOnline += $name
-        }
+    $players = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
+               ForEach-Object { $_.Groups[1].Value }
+
+    $vipOnline = $vipMessages.Keys | Where-Object {
+        $players -match ("(?i)^" + [regex]::Escape($_) + "$")
     }
 
-    $vipAlert = ""
-    foreach ($vip in $vipPriority) {
-        if ($vipOnline -contains $vip) {
-            $vipAlert = $vipMessages[$vip]
-            break
-        }
-    }
+    # write main stats
+    Set-Content $logPath "$line1`n$line2`n$line3`n$line4"
 
-    #
-    # 8) WRITE TEXT LOG
-    #
-    $logText = @($line1,$line2,$line3,$line4) -join "`n"
-    if ($vipAlert) { $logText += "`n`n$vipAlert" }
-    Set-Content -Path "NewStats.txt" -Value $logText
-    Write-Host "Prepared NewStats.txt (VIP alert: '$vipAlert')."
-
-    #
-    # 9) GENERATE QUICKCHART GRAPH
-    #
-    $chartPath   = "TodayTrend.png"
-    $chartExists = $false
-
-    if ($todayLines.Count -gt 0) {
-        $labels = $todayLines | ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
-        $data   = $todayLines | ForEach-Object { [int]($_.Split(',')[1]) }
-        Write-Host "Chart labels: $($labels -join ', ')"
-        Write-Host "Chart data:  $($data   -join ', ')"
-
-        $chartConfig = @{
-            type = 'line'
-            data = @{
-                labels   = $labels
-                datasets = @(@{
-                    label       = 'Players Online'
-                    data        = $data
-                    borderColor = 'green'
-                    fill        = $false
-                })
-            }
-            options = @{
-                title = @{
-                    display = $true
-                    text    = "Generals Online — $today"
-                }
-            }
-        } | ConvertTo-Json -Depth 10 -Compress
-
-        $chartUrl = "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))"
-        try {
-            Invoke-WebRequest -Uri $chartUrl -OutFile $chartPath -ErrorAction Stop
-            $size = (Get-Item $chartPath).Length
-            if ($size -gt 2000) {
-                Write-Host "✅ Chart downloaded ($size bytes)."
-                $chartExists = $true
-            }
-            else {
-                Write-Warning "Chart file too small ($size bytes)."
+    # append one VIP alert by priority
+    if ($vipOnline.Count -gt 0) {
+        Add-Content $logPath ""
+        foreach ($vip in $vipPriority) {
+            if ($vipOnline -contains $vip) {
+                Add-Content $logPath $vipMessages[$vip]
+                break
             }
         }
-        catch {
-            Write-Warning "QuickChart download failed: $($_.Exception.Message)"
-        }
-    }
-    else {
-        Write-Warning "No data today — skipping chart."
     }
 
-    #
-    # 10) SEND TO DISCORD (with fallback)
-    #
-    try {
-        if ($chartExists) {
-            Write-Host "Sending stats + chart to Discord (multipart)..."
-            $form = @{
-                payload_json = (@{ content = $logText } | ConvertTo-Json)
-                file         = Get-Item $chartPath
-            }
-            Invoke-RestMethod -Uri $webhookUrl -Method Post -Form $form -ErrorAction Stop
-        }
-        else {
-            throw "Skipping multipart because no chart."
-        }
-        Write-Host "✅ Multipart Discord post succeeded."
+    # --- SEND TO DISCORD (via secret) ---
+    if ($env:DISCORD_WEBHOOK) {
+        $payload = @{ content = Get-Content $logPath -Raw } | ConvertTo-Json -Compress
+        Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK `
+                          -Method Post `
+                          -Body $payload `
+                          -ContentType 'application/json'
     }
-    catch {
-        Write-Warning "Multipart post failed: $($_.Exception.Message)"
-        Write-Host  "Retrying text-only Discord post..."
-        try {
-            $json = @{ content = $logText } | ConvertTo-Json
-            Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $json -ContentType 'application/json' -ErrorAction Stop
-            Write-Host "✅ Text-only Discord post succeeded."
-        }
-        catch {
-            Write-Error "Text-only retry failed: $($_.Exception.Message)"
-        }
-    }
-}
-catch {
-    Write-Error "Fatal script error: $($_.Exception.Message)"
+
+} catch {
+    Set-Content "NewStats.txt" "━━━━━━━━━━━━━━━━━━━━━━`n❌** Failed **: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
     exit 8
 }
