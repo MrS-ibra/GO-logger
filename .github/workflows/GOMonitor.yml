@@ -10,10 +10,11 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_PAT }}
 
       - name: Run Tracker
+        # inject your webhook secret into the script's environment
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: pwsh ./PlayerStats.ps1
 
       - name: Commit Log
@@ -21,16 +22,5 @@ jobs:
           git config --global user.name "IbraBot"
           git config --global user.email "ibra@example.com"
           git add NewStats.txt StatsHistory.txt
-          git commit -m "Update lifetime and peak logs" || echo "No changes to commit"
+          git commit -m "Update stats logs" || echo "No changes to commit"
           git push || true
-
-      - name: Send NewStats Log to Discord
-        if: always()
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          message=$(awk 'NF' NewStats.txt | awk '{print}' ORS='\\n')
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"$message\"}" \
-               $DISCORD_WEBHOOK
