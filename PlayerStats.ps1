@@ -70,7 +70,35 @@ try {
     $line4    = "🆕** +$joinedToday **today"
     $line5    = $peakLine
 
+    # --- VIP detection ---
+    # Define your VIP watchlist (exact names as they appear on the site)
+    $watchList = @(
+        'Kill toll^',
+        'WHYY SO BRITISH',
+        'bjorn'
+        # Add more names here
+    )
+
+    # Extract player names from HTML
+    $players = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
+        ForEach-Object { $_.Groups[1].Value }
+
+    $alerts = @()
+    foreach ($name in $watchList) {
+        if ($players -match ("(?i)^" + [regex]::Escape($name) + "$")) {
+            $alerts += "Hey Generals! $name is online right now! 🎯"
+        }
+    }
+
+    # Write main stats
     Set-Content $logPath "$line1`n$line2`n$line3`n$line4`n$line5"
+
+    # Append VIP alerts if any
+    if ($alerts.Count -gt 0) {
+        Add-Content $logPath ""
+        Add-Content $logPath ($alerts -join "`n")
+    }
+
 }
 catch {
     Set-Content "NewStats.txt" "━━━━━━━━━━━━━━━━━━━━━━`n❌** Failed **: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
