@@ -1,10 +1,11 @@
 #!/usr/bin/env pwsh
-# Reads StatsHistory.txt, generates a QuickChart PNG with background image, sends it to Discord
+# Reads StatsHistory.txt, generates a QuickChart PNG, overlays logo with ImageMagick, sends to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
     [string]$PeakLog    = "StatsHistory.txt",
-    [string]$ChartPath  = "TodayTrend.png"
+    [string]$ChartPath  = "TodayTrend.png",
+    [string]$LogoPath   = "logo.png"
 )
 
 try {
@@ -25,7 +26,7 @@ try {
     $labels = $todayLines | ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
     $data   = $todayLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-    # QuickChart config (no logo here, background will be added via query param)
+    # QuickChart config
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -45,17 +46,20 @@ try {
         }
     } | ConvertTo-Json -Depth 10 -Compress
 
-    # Build QuickChart URL with background image
-    $encodedConfig = [uri]::EscapeDataString($chartConfig)
-    $backgroundUrl = [uri]::EscapeDataString("https://i.imgur.com/MMleWsX.png")
-    $chartUrl = "https://quickchart.io/chart?backgroundImage=$backgroundUrl&c=$encodedConfig"
-
     # Download chart PNG
+    $encodedConfig = [uri]::EscapeDataString($chartConfig)
+    $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
     Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
 
     if (-not (Test-Path $ChartPath)) {
         throw "Chart file was not created."
     }
+
+    # Download logo PNG
+    Invoke-WebRequest -Uri "https://i.imgur.com/MMleWsX.png" -OutFile $LogoPath -ErrorAction Stop
+
+    # Overlay logo on chart using ImageMagick (top-left corner, 50x50)
+    & magick convert $ChartPath $LogoPath -geometry 50x50+10+10 -composite $ChartPath
 
     # Send to Discord (image only)
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
