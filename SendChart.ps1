@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Reads StatsHistory.txt, generates a QuickChart PNG with embedded logo, sends it to Discord
+# Reads StatsHistory.txt, generates a QuickChart PNG with background image, sends it to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
@@ -25,12 +25,7 @@ try {
     $labels = $todayLines | ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
     $data   = $todayLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-    # Download logo and convert to Base64 data URI
-    $logoBytes = (Invoke-WebRequest "https://i.imgur.com/MMleWsX.png" -UseBasicParsing).Content
-    $logoBase64 = [System.Convert]::ToBase64String($logoBytes)
-    $logoDataUri = "data:image/png;base64,$logoBase64"
-
-    # QuickChart config with embedded logo drawn in top-left corner
+    # QuickChart config (no logo here, background will be added via query param)
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -48,24 +43,15 @@ try {
                 text    = "Generals Online — $today"
             }
         }
-        plugins = @(
-            @"
-            {
-              id: 'customLogo',
-              afterDraw: chart => {
-                const ctx = chart.ctx;
-                const image = new Image();
-                image.src = '$logoDataUri';
-                ctx.drawImage(image, 10, 10, 50, 50);
-              }
-            }
-"@
-        )
     } | ConvertTo-Json -Depth 10 -Compress
 
+    # Build QuickChart URL with background image
+    $encodedConfig = [uri]::EscapeDataString($chartConfig)
+    $backgroundUrl = [uri]::EscapeDataString("https://i.imgur.com/MMleWsX.png")
+    $chartUrl = "https://quickchart.io/chart?backgroundImage=$backgroundUrl&c=$encodedConfig"
+
     # Download chart PNG
-    Invoke-WebRequest -Uri "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))" `
-                      -OutFile $ChartPath -ErrorAction Stop
+    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
 
     if (-not (Test-Path $ChartPath)) {
         throw "Chart file was not created."
