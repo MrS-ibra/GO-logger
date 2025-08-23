@@ -77,7 +77,7 @@ try {
         'Add later'    = '🚨 Add later.'
     }
 
-    # Priority order (first in list = highest priority)
+    # Priority order when there are 2 or more VIP players online (first in list = highest priority)
     $vipPriority = @(
         '-DoMiNaToR-',
         'Kill toll^',
