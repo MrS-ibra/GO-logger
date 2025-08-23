@@ -10,10 +10,10 @@ try {
     $peakLog = "StatsHistory.txt"
     $logPath = "NewStats.txt"
 
-    # trim history to last 170 lines if >180
+    # trim history to last 190 lines if >200
     if (Test-Path $peakLog) {
         $all = Get-Content $peakLog
-        if ($all.Count -ge 180) {
+        if ($all.Count -ge 200) {
             Set-Content $peakLog $all[10..($all.Count - 1)]
         }
     }
