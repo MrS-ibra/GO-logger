@@ -42,7 +42,6 @@ try {
         $parts      = $peakEntry -split ","
         $peakTime   = ($parts[0] -split " ")[1]
         $peakCount  = [int]$parts[1]
-        # new peak if current online equals today’s peak and we’ve seen at least one prior entry
         $isNewPeak  = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
         $peakLine   = "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
     }
@@ -73,10 +72,19 @@ try {
     $vipMessages = @{
         'Mr Stratos'   = '🚨 Ibra is online, join his halal lounge!'
         'Kill toll^'   = '🚨 Kill toll is online, watch out for the big KT!'
-        '-DoMiNaToR-' = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
+        '-DoMiNaToR-'  = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
         'OldAnalytics' = '🚨 OldAnalytics is online, ready to solve your problems!'
         'Add later'    = '🚨 Add later.'
     }
+
+    # Priority order (first in list = highest priority)
+    $vipPriority = @(
+        '-DoMiNaToR-',
+        'Kill toll^',
+        'OldAnalytics',
+        'Mr Stratos',
+        'Add later'
+    )
 
     # Extract player names from HTML
     $players = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
@@ -93,11 +101,14 @@ try {
     # Write main stats
     Set-Content $logPath "$line1`n$line2`n$line3`n$line4"
 
-    # Append VIP alerts if any
+    # Append only ONE VIP alert based on priority
     if ($vipOnline.Count -gt 0) {
         Add-Content $logPath ""
-        foreach ($vip in $vipOnline) {
-            Add-Content $logPath $vipMessages[$vip]
+        foreach ($vip in $vipPriority) {
+            if ($vipOnline -contains $vip) {
+                Add-Content $logPath $vipMessages[$vip]
+                break
+            }
         }
     }
 
