@@ -62,22 +62,21 @@ try {
     } else { [int]$count }
     $marker      = if ([int]$count -gt $prevCount) { " ⬆️" } elseif ([int]$count -lt $prevCount) { " 🔻" } else { "" }
 
-    # Discord message
+    # Discord message lines
     $timeOnly = Get-Date -Format "HH:mm"
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢" + ($(if ($isNewPeak) { " ⬆️" } else { "" }))
     $line3    = "🆕** +$joinedToday **today"
     $line4    = $peakLine
 
-    # --- VIP detection ---
-    $watchList = @(
-        'Mr Stratos',
-        'Kill toll^',
-        '-DoMiNaToR-',
-        'OldAnalytics',
-        'Add later'
-        # Add more names here
-    )
+    # --- VIP detection with custom messages ---
+    $vipMessages = @{
+        'Mr Stratos'   = '🚨 Mr Stratos is online — chilling or playing versus aod as always!'
+        'Kill toll^'   = '🚨 Kill toll^ is online — watch out for the big KT!'
+        '-DoMiNaToR-'  = '🚨 Domi is online and playing his weird 8 player maps!'
+        'OldAnalytics' = '🚨 OldAnalytics is online — stats incoming!'
+        'Add later'    = '🚨 Add later is online — placeholder message.'
+    }
 
     # Extract player names from HTML
     $players = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
@@ -85,26 +84,20 @@ try {
 
     # Find which VIPs are online
     $vipOnline = @()
-    foreach ($name in $watchList) {
+    foreach ($name in $vipMessages.Keys) {
         if ($players -match ("(?i)^" + [regex]::Escape($name) + "$")) {
             $vipOnline += $name
         }
     }
 
     # Write main stats
-    Set-Content $logPath "$line1`n$line2`n$line3`n$line4`n$line5"
+    Set-Content $logPath "$line1`n$line2`n$line3`n$line4"
 
     # Append VIP alerts if any
     if ($vipOnline.Count -gt 0) {
         Add-Content $logPath ""
-        if ($vipOnline.Count -eq 1) {
-            Add-Content $logPath ("{0} is online right now! 🚨" -f $vipOnline[0])
-        }
-        else {
-            $lastName = $vipOnline[-1]
-            $otherNames = $vipOnline[0..($vipOnline.Count - 2)]
-            $nameList = ($otherNames -join ', ') + " and " + $lastName
-            Add-Content $logPath ("{0} are online right now! 🚨" -f $nameList) 
+        foreach ($vip in $vipOnline) {
+            Add-Content $logPath $vipMessages[$vip]
         }
     }
 
