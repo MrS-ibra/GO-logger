@@ -14,7 +14,7 @@ try {
     }
 
     # 2) EXTRACT STATS
-    $count  = (($html -split "Total Lifetime Players:")[1] -split "<")[0] -replace '\D',''
+    $count  = (($html -split "Total Lifetime Players:")[1] -split "<")[0] -replace '\D', ''
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { '0' }
     Write-Host "Stats – Total:$count  Online:$online"
 
@@ -36,7 +36,8 @@ try {
         if ($todayLast) {
             Set-Content "LastLogOfDay.txt" $todayLast
             Write-Host "Wrote last log of day: $todayLast"
-        } else {
+        }
+        else {
             Set-Content "LastLogOfDay.txt" "No entries for $today"
             Write-Host "No entries for $today to write to LastLogOfDay.txt"
         }
@@ -56,15 +57,17 @@ try {
         $isNewPeak = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
         $peakLine  = "📈 Peak **$peakTime** (GMT) — **$peakCount** players"
         Write-Host "Today's peak: $peakLine"
-    } else {
+    }
+    else {
         $peakLine  = "**Today’s peak** not recorded ❔"
         $isNewPeak = $false
         Write-Host "No peak entry for today."
     }
 
     $joinedToday = if ($todayLines.Count -ge 2) {
-        [int](($todayLines[-1] -split ',')[2]) - [int](($todayLines[0] -split ',')[2])
-    } else {
+        [int]((($todayLines[-1] -split ',')[2])) - [int]((($todayLines[0]  -split ',')[2]))
+    }
+    else {
         0
     }
     Write-Host "Joined today: +$joinedToday"
@@ -72,7 +75,9 @@ try {
     # 6) BUILD DISCORD LINES
     $timeOnly     = Get-Date -Format 'HH:mm'
     $prevCountVal = if ($todayLines.Count -ge 2) { [int]($todayLines[-2] -split ',')[2] } else { [int]$count }
-    $marker       = if ([int]$count -gt $prevCountVal) { ' ⬆️' } elseif ([int]$count -lt $prevCountVal) { ' 🔻' } else { '' }
+    $marker       = if ([int]$count -gt $prevCountVal) { ' ⬆️' }
+                    elseif ([int]$count -lt $prevCountVal) { ' 🔻' }
+                    else { '' }
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2 = "👥 **$count** total$marker — **$online** Online 🟢" + (if ($isNewPeak) { ' ⬆️' } else { '' })
     $line3 = "🆕 **+$joinedToday** today"
@@ -90,7 +95,8 @@ try {
 
     $players  = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
                 ForEach-Object { $_.Groups[1].Value }
-    $vipOnline = $vipMessages.Keys | Where-Object { $players -match ("(?i)^" + [regex]::Escape($_) + "$") }
+    $vipOnline = $vipMessages.Keys |
+                 Where-Object { $players -match ("(?i)^" + [regex]::Escape($_) + "$") }
 
     $vipAlert = ''
     foreach ($vip in $vipPriority) {
@@ -111,11 +117,14 @@ try {
     $chartExists = $false
 
     if ($todayLines.Count -gt 0) {
-        $labels = $todayLines | ForEach-Object { ($_ -split ',')[0] -split ' ')[1] }
-        $data   = $todayLines | ForEach-Object { [int](($_ -split ',')[1]) }
+        # Build arrays via String.Split for clarity
+        $labels = $todayLines |
+                  ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
+        $data   = $todayLines |
+                  ForEach-Object { [int]($_.Split(',')[1]) }
 
         Write-Host "Chart labels: $($labels -join ', ')"
-        Write-Host "Chart data:  $($data -join ', ')"
+        Write-Host "Chart data:  $($data   -join ', ')"
 
         $chartConfig = @{
             type    = 'line'
