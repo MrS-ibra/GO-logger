@@ -112,7 +112,7 @@ try {
         }
     }
 
-    # --- BUILD CHART PNG ---
+    # --- BUILD CHART PNG (no size limit) ---
     $chartPath   = "TodayTrend.png"
     $chartExists = $false
     if ($todayLines.Count -gt 0) {
@@ -141,7 +141,7 @@ try {
         try {
             Invoke-WebRequest -Uri "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))" `
                               -OutFile $chartPath -ErrorAction Stop
-            if ((Get-Item $chartPath).Length -gt 500) { $chartExists = $true }
+            $chartExists = $true
         }
         catch {
             Write-Warning "Chart generation failed: $($_.Exception.Message)"
