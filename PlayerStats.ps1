@@ -32,7 +32,9 @@ try {
     # 4) DAILY LAST-LOG SNAPSHOT
     $today = Get-Date -Format 'yyyy-MM-dd'
     if ((Get-Date -Format 'HH:mm') -eq '23:59') {
-        $todayLast = Get-Content $peakLog | Where-Object { $_ -match "^$today" } | Select-Object -Last 1
+        $todayLast = Get-Content $peakLog |
+                     Where-Object { $_ -match "^$today" } |
+                     Select-Object -Last 1
         if ($todayLast) {
             Set-Content "LastLogOfDay.txt" $todayLast
             Write-Host "Wrote last log of day: $todayLast"
@@ -43,7 +45,7 @@ try {
         }
     }
 
-    # 5) COMPUTE PEAK & JOINED TODAY
+    # 5) COMPUTE TODAY’S PEAK
     $todayLines = Get-Content $peakLog |
                   Where-Object { $_ -match "^$today" -and ($_ -split ',').Count -eq 3 }
     $peakEntry  = $todayLines |
@@ -51,11 +53,11 @@ try {
                   Select-Object -First 1
 
     if ($peakEntry) {
-        $parts     = $peakEntry -split ','
-        $peakTime  = ($parts[0] -split ' ')[1]
-        $peakCount = [int]$parts[1]
-        $isNewPeak = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
-        $peakLine  = "📈 Peak **$peakTime** (GMT) — **$peakCount** players"
+        $parts      = $peakEntry -split ','
+        $peakTime   = ($parts[0] -split ' ')[1]
+        $peakCount  = [int]$parts[1]
+        $isNewPeak  = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
+        $peakLine   = "📈 Peak **$peakTime** (GMT) — **$peakCount** players"
         Write-Host "Today's peak: $peakLine"
     }
     else {
@@ -64,26 +66,44 @@ try {
         Write-Host "No peak entry for today."
     }
 
-    $joinedToday = if ($todayLines.Count -ge 2) {
-        [int]((($todayLines[-1] -split ',')[2])) - [int]((($todayLines[0]  -split ',')[2]))
+    # 6) HOW MANY JOINED TODAY
+    if ($todayLines.Count -ge 2) {
+        $firstCount = [int]((($todayLines[0]  -split ',')[2]))
+        $lastCount  = [int]((($todayLines[-1] -split ',')[2]))
+        $joinedToday = $lastCount - $firstCount
     }
     else {
-        0
+        $joinedToday = 0
     }
     Write-Host "Joined today: +$joinedToday"
 
-    # 6) BUILD DISCORD LINES
-    $timeOnly     = Get-Date -Format 'HH:mm'
-    $prevCountVal = if ($todayLines.Count -ge 2) { [int]($todayLines[-2] -split ',')[2] } else { [int]$count }
-    $marker       = if ([int]$count -gt $prevCountVal) { ' ⬆️' }
-                    elseif ([int]$count -lt $prevCountVal) { ' 🔻' }
-                    else { '' }
+    # 7) BUILD DISCORD LINES
+    $timeOnly = Get-Date -Format 'HH:mm'
+
+    if ($todayLines.Count -ge 2) {
+        $prevCountVal = [int]((($todayLines[-2] -split ',')[2]))
+    }
+    else {
+        $prevCountVal = [int]$count
+    }
+
+    if ([int]$count -gt $prevCountVal) {
+        $marker = ' ⬆️'
+    }
+    elseif ([int]$count -lt $prevCountVal) {
+        $marker = ' 🔻'
+    }
+    else {
+        $marker = ''
+    }
+
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2 = "👥 **$count** total$marker — **$online** Online 🟢" + (if ($isNewPeak) { ' ⬆️' } else { '' })
+    $line2 = "👥 **$count** total$marker — **$online** Online 🟢" +
+             (if ($isNewPeak) { ' ⬆️' } else { '' })
     $line3 = "🆕 **+$joinedToday** today"
     $line4 = $peakLine
 
-    # 7) VIP DETECTION & PRIORITY
+    # 8) VIP DETECTION & PRIORITY
     $vipMessages = @{
         '-DoMiNaToR-'  = '🚨 Domi is online — the stream is live and the chaos begins!'
         'Kill toll^'   = "🚨 Kill toll^ is online — watch out for KT's surprises!"
@@ -93,8 +113,8 @@ try {
     }
     $vipPriority = @('-DoMiNaToR-','Kill toll^','OldAnalytics','Mr Stratos','Add later')
 
-    $players  = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
-                ForEach-Object { $_.Groups[1].Value }
+    $players   = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") `
+                   | ForEach-Object { $_.Groups[1].Value }
     $vipOnline = $vipMessages.Keys |
                  Where-Object { $players -match ("(?i)^" + [regex]::Escape($_) + "$") }
 
@@ -106,22 +126,23 @@ try {
         }
     }
 
-    # 8) WRITE TEXT LOG
+    # 9) WRITE TEXT LOG
     $logText = "$line1`n$line2`n$line3`n$line4"
     if ($vipAlert) { $logText += "`n`n$vipAlert" }
     Set-Content "NewStats.txt" $logText
     Write-Host "Prepared NewStats.txt with VIP alert: '$vipAlert'"
 
-    # 9) QUICKCHART GRAPH
+    # 10) QUICKCHART GRAPH
     $chartPath   = "TodayTrend.png"
     $chartExists = $false
 
     if ($todayLines.Count -gt 0) {
-        # Build arrays via String.Split for clarity
-        $labels = $todayLines |
-                  ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
-        $data   = $todayLines |
-                  ForEach-Object { [int]($_.Split(',')[1]) }
+        $labels = $todayLines | ForEach-Object {
+            ($_.Split(',')[0]).Split(' ')[1]
+        }
+        $data = $todayLines | ForEach-Object {
+            [int]($_.Split(',')[1])
+        }
 
         Write-Host "Chart labels: $($labels -join ', ')"
         Write-Host "Chart data:  $($data   -join ', ')"
@@ -165,7 +186,7 @@ try {
         Write-Warning "No today's data — skipping chart generation."
     }
 
-    # 10) SEND TO DISCORD
+    # 11) SEND TO DISCORD
     try {
         if ($chartExists) {
             Write-Host "Sending stats + chart to Discord..."
