@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Reads StatsHistory.txt, generates a QuickChart PNG, sends it to Discord
+# Reads StatsHistory.txt, generates a QuickChart PNG with logo overlay, sends it to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
@@ -25,7 +25,7 @@ try {
     $labels = $todayLines | ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
     $data   = $todayLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-    # QuickChart config with logo overlay
+    # QuickChart config with custom plugin to draw logo
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -42,16 +42,22 @@ try {
                 display = $true
                 text    = "Generals Online — $today"
             }
-            layout = @{
-                image = @{
-                    src    = "https://i.imgur.com/MMleWsX.png"
-                    x      = 10
-                    y      = 10
-                    width  = 50
-                    height = 50
-                }
-            }
         }
+        plugins = @(
+            @"
+            {
+              id: 'customLogo',
+              afterDraw: chart => {
+                const ctx = chart.ctx;
+                const image = new Image();
+                image.src = 'https://i.imgur.com/MMleWsX.png';
+                image.onload = () => {
+                  ctx.drawImage(image, 10, 10, 50, 50);
+                };
+              }
+            }
+"@
+        )
     } | ConvertTo-Json -Depth 10 -Compress
 
     # Download chart PNG
