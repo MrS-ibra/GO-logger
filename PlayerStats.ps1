@@ -74,7 +74,7 @@ try {
         'Kill toll^'   = '🚨 Kill toll is online, watch out for the big KT!'
         '-DoMiNaToR-'  = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
         'OldAnalytics' = '🚨 OldAnalytics is online, ready to solve your problems!'
-        'Add later'    = '🚨 Add later.'
+        'x64_dev'    = '🚨 Daniels is online. he wants some testers .'
     }
 
     # Priority order when there are 2 or more VIP players online (first in list = highest priority)
@@ -83,7 +83,7 @@ try {
         'Kill toll^',
         'OldAnalytics',
         'Mr Stratos',
-        'Add later'
+        'x64_dev'
     )
 
     # Extract player names from HTML
