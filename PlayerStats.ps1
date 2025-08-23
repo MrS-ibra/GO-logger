@@ -76,7 +76,7 @@ try {
         'Kill toll^',
         '-DoMiNaToR-',
         'OldAnalytics',
-        'undead2146'
+        'Add later'
         # Add more names here
     )
 
