@@ -131,6 +131,9 @@ try {
                 $data   += [int]$parts[1]
             }
 
+            Write-Host "Chart labels: $($labels -join ', ')"
+            Write-Host "Chart data: $($data -join ', ')"
+
             $chartConfig = @{
                 type = "line"
                 data = @{
@@ -152,7 +155,14 @@ try {
 
             $chartUrl = "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))"
             Invoke-WebRequest -Uri $chartUrl -OutFile "TodayTrend.png" -ErrorAction Stop
-            $chartExists = $true
+
+            if ((Get-Item "TodayTrend.png").Length -gt 1000) {
+                $chartExists = $true
+                Write-Host "Chart generated successfully."
+            }
+            else {
+                Write-Warning "QuickChart returned a small/invalid file."
+            }
         }
         else {
             Write-Warning "No data for today — chart skipped."
