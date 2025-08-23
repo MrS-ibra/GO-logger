@@ -71,7 +71,6 @@ try {
     $line5    = $peakLine
 
     # --- VIP detection ---
-    # Define VIP watchlist (exact names as they appear on the site)
     $watchList = @(
         'Mr Stratos',
         'Kill toll^',
@@ -85,10 +84,11 @@ try {
     $players = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
         ForEach-Object { $_.Groups[1].Value }
 
-    $alerts = @()
+    # Find which VIPs are online
+    $vipOnline = @()
     foreach ($name in $watchList) {
         if ($players -match ("(?i)^" + [regex]::Escape($name) + "$")) {
-            $alerts += "Hey Generals! $name is online right now! 🎯"
+            $vipOnline += $name
         }
     }
 
@@ -96,9 +96,17 @@ try {
     Set-Content $logPath "$line1`n$line2`n$line3`n$line4`n$line5"
 
     # Append VIP alerts if any
-    if ($alerts.Count -gt 0) {
+    if ($vipOnline.Count -gt 0) {
         Add-Content $logPath ""
-        Add-Content $logPath ($alerts -join "`n")
+        if ($vipOnline.Count -eq 1) {
+            Add-Content $logPath ("Hey Generals! {0} is online right now! 🎯" -f $vipOnline[0])
+        }
+        else {
+            $lastName = $vipOnline[-1]
+            $otherNames = $vipOnline[0..($vipOnline.Count - 2)]
+            $nameList = ($otherNames -join ', ') + " and " + $lastName
+            Add-Content $logPath ("Hey Generals! {0} are online right now! 🎯" -f $nameList)
+        }
     }
 
 }
