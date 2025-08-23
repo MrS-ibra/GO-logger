@@ -73,8 +73,10 @@ try {
     # --- VIP detection ---
     # Define VIP watchlist (exact names as they appear on the site)
     $watchList = @(
-        'Kill toll^',
         'Mr Stratos',
+        'Kill toll^',
+        '-DoMiNaToR-',
+        'OldAnalytics',
         'undead2146'
         # Add more names here
     )
