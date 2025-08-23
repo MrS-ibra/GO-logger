@@ -1,5 +1,3 @@
-#!/usr/bin/env pwsh
-
 try {
     $url     = "https://www.playgenerals.online/players"
     $html    = (Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop).Content
@@ -12,7 +10,7 @@ try {
     $peakLog = "StatsHistory.txt"
     $logPath = "NewStats.txt"
 
-    # trim history
+    # trim history to last 190 lines if >200
     if (Test-Path $peakLog) {
         $all = Get-Content $peakLog
         if ($all.Count -ge 200) {
@@ -23,20 +21,24 @@ try {
     # append this run
     Add-Content $peakLog "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
 
-    # last log of day at 23:59 GMT
+    # write last log of the day at 23:59 GMT
     $today = Get-Date -Format 'yyyy-MM-dd'
     if ((Get-Date -Format 'HH:mm') -eq '23:59') {
-        $lines = Get-Content $peakLog | Where-Object { $_ -match "^$today" }
-        $last  = $lines | Select-Object -Last 1
-        if ($last) { Set-Content "LastLogOfDay.txt" $last }
-        else       { Set-Content "LastLogOfDay.txt" "No entries for $today" }
+        $todayLast = Get-Content $peakLog |
+                     Where-Object { $_ -match "^$today" } |
+                     Select-Object -Last 1
+        if ($todayLast) {
+            Set-Content "LastLogOfDay.txt" $todayLast
+        } else {
+            Set-Content "LastLogOfDay.txt" "No entries for $today"
+        }
     }
 
-    # today’s stats & peak
+    # isolate today’s entries & compute peak
     $todayLines = Get-Content $peakLog |
                   Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -eq 3 }
     $peakEntry  = $todayLines |
-                  Sort-Object { [int](($_ -split ",")[1]) } -Descending |
+                  Sort-Object { ($_ -split ",")[1] -as [int] } -Descending |
                   Select-Object -First 1
 
     if ($peakEntry) {
@@ -45,21 +47,19 @@ try {
         $peakCount = [int]$p[1]
         $isNewPeak = ([int]$online -eq $peakCount -and $todayLines.Count -gt 1)
         $peakLine  = "📈 Peak **$peakTime** (GMT) — **$peakCount** players"
-    }
-    else {
+    } else {
         $isNewPeak = $false
         $peakLine  = "**Today’s peak** not recorded ❔"
     }
 
-    # joined today
+    # how many joined today
     if ($todayLines.Count -ge 2) {
-        $firstCount  = [int](($todayLines[0]  -split ",")[2])
-        $lastCount   = [int](($todayLines[-1] -split ",")[2])
-        $joinedToday = $lastCount - $firstCount
+        $joinedToday = [int](($todayLines[-1] -split ",")[2]) - [int](($todayLines[0] -split ",")[2])
+    } else {
+        $joinedToday = 0
     }
-    else { $joinedToday = 0 }
 
-    # arrow marker
+    # arrows for total count
     if ($todayLines.Count -ge 2) {
         $prevCount = [int](($todayLines[-2] -split ",")[2])
     } else {
@@ -69,11 +69,10 @@ try {
     elseif ([int]$count -lt $prevCount) { $marker = " 🔻" }
     else                                { $marker = "" }
 
-    # build Discord lines
+    # build message lines
     $timeOnly = Get-Date -Format "HH:mm"
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢"
-    if ($isNewPeak) { $line2 += " ⬆️" }
+    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢" + (if ($isNewPeak) { " ⬆️" } else { "" })
     $line3    = "🆕** +$joinedToday **today"
     $line4    = $peakLine
 
@@ -86,8 +85,9 @@ try {
         'Add later'    = '🚨 Add later.'
     }
     $vipPriority = @('-DoMiNaToR-','Kill toll^','OldAnalytics','Mr Stratos','Add later')
-    $players     = [regex]::Matches($html,"<th\s+scope=['""]row['""]>(.*?)</th>") |
-                   ForEach-Object { $_.Groups[1].Value }
+
+    $players = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
+               ForEach-Object { $_.Groups[1].Value }
 
     $vipOnline = $vipMessages.Keys | Where-Object {
         $players -match ("(?i)^" + [regex]::Escape($_) + "$")
@@ -96,7 +96,7 @@ try {
     # write main stats
     Set-Content $logPath "$line1`n$line2`n$line3`n$line4"
 
-    # append first matching VIP
+    # append one VIP alert by priority
     if ($vipOnline.Count -gt 0) {
         Add-Content $logPath ""
         foreach ($vip in $vipPriority) {
@@ -107,24 +107,16 @@ try {
         }
     }
 
-    #
-    # SEND TO DISCORD
-    #
+    # --- SEND TO DISCORD (via secret) ---
     if ($env:DISCORD_WEBHOOK) {
-        try {
-            $payload = @{ content = Get-Content $logPath -Raw } | ConvertTo-Json -Compress
-            Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK `
-                              -Method Post `
-                              -Body $payload `
-                              -ContentType 'application/json'
-            Write-Host "✅ Posted to Discord"
-        }
-        catch {
-            Write-Warning "Discord post failed: $($_.Exception.Message)"
-        }
+        $payload = @{ content = Get-Content $logPath -Raw } | ConvertTo-Json -Compress
+        Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK `
+                          -Method Post `
+                          -Body $payload `
+                          -ContentType 'application/json'
     }
-}
-catch {
-    Write-Error "Script error: $($_.Exception.Message)"
-    # do NOT exit non-zero here so GitHub Action step succeeds
+
+} catch {
+    Set-Content "NewStats.txt" "━━━━━━━━━━━━━━━━━━━━━━`n❌** Failed **: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
+    exit 8
 }
