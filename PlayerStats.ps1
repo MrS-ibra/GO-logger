@@ -113,48 +113,58 @@ try {
     }
 
     # --- Generate chart via QuickChart API ---
-    $labels = @()
-    $data   = @()
-    foreach ($line in $todayLines) {
-        $parts = $line -split ","
-        $labels += ($parts[0] -split " ")[1]   # Time only
-        $data   += [int]$parts[1]              # Online count
+    try {
+        $labels = @()
+        $data   = @()
+        foreach ($line in $todayLines) {
+            $parts = $line -split ","
+            $labels += ($parts[0] -split " ")[1]   # Time only
+            $data   += [int]$parts[1]              # Online count
+        }
+
+        $chartConfig = @{
+            type = "line"
+            data = @{
+                labels = $labels
+                datasets = @(@{
+                    label = "Players Online"
+                    data = $data
+                    borderColor = "green"
+                    fill = $false
+                })
+            }
+            options = @{
+                title = @{
+                    display = $true
+                    text = "Generals Online — $today"
+                }
+            }
+        } | ConvertTo-Json -Depth 10 -Compress
+
+        $chartUrl = "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))"
+        Invoke-WebRequest -Uri $chartUrl -OutFile "TodayTrend.png" -ErrorAction Stop
+        $chartExists = $true
+    }
+    catch {
+        Write-Warning "Chart generation failed: $($_.Exception.Message)"
+        $chartExists = $false
     }
 
-    $chartConfig = @{
-        type = "line"
-        data = @{
-            labels = $labels
-            datasets = @(@{
-                label = "Players Online"
-                data = $data
-                borderColor = "green"
-                fill = $false
-            })
-        }
-        options = @{
-            title = @{
-                display = $true
-                text = "Generals Online — $today"
-            }
-        }
-    } | ConvertTo-Json -Compress
-
-    $chartUrl = "https://quickchart.io/chart?c=$([uri]::EscapeDataString($chartConfig))"
-    Invoke-WebRequest -Uri $chartUrl -OutFile "TodayTrend.png"
-
-    # --- Send to Discord with chart attached ---
+    # --- Send to Discord ---
     $webhookUrl = "YOUR_DISCORD_WEBHOOK_URL"
 
-    $body = @{
-        "content" = Get-Content $logPath -Raw
+    if ($chartExists -and (Test-Path "TodayTrend.png")) {
+        $body = @{
+            "content" = Get-Content $logPath -Raw
+        }
+        $files = @{
+            "file1" = Get-Item "TodayTrend.png"
+        }
+        Invoke-RestMethod -Uri $webhookUrl -Method Post -Form ($body + $files)
     }
-
-    $files = @{
-        "file1" = Get-Item "TodayTrend.png"
+    else {
+        Invoke-RestMethod -Uri $webhookUrl -Method Post -Body (@{ "content" = Get-Content $logPath -Raw } | ConvertTo-Json) -ContentType 'application/json'
     }
-
-    Invoke-RestMethod -Uri $webhookUrl -Method Post -Form ($body + $files)
 
 }
 catch {
