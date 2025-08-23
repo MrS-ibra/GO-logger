@@ -75,7 +75,7 @@ try {
     $watchList = @(
         'Kill toll^',
         'Mr Stratos',
-        'bjorn'
+        'undead2146'
         # Add more names here
     )
 
