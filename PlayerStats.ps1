@@ -21,8 +21,20 @@ try {
     # append this run
     Add-Content $peakLog "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
 
+    # write last log of the day at 23:59 GMT
+    $today = Get-Date -Format 'yyyy-MM-dd'
+    if ((Get-Date -Format 'HH:mm') -eq '23:59') {
+        $lastLogFile = "LastLogOfDay.txt"
+        $todayLast   = Get-Content $peakLog | Where-Object { $_ -match "^$today" } | Select-Object -Last 1
+        if ($todayLast) {
+            Set-Content $lastLogFile $todayLast
+        }
+        else {
+            Set-Content $lastLogFile "No entries for $today"
+        }
+    }
+
     # isolate today’s entries and find today’s peak (highest online)
-    $today          = Get-Date -Format 'yyyy-MM-dd'
     $todayLines     = Get-Content $peakLog | Where-Object { $_ -match "^$today" -and ($_ -split ",").Count -eq 3 }
     $peakEntry      = $todayLines | Sort-Object { ($_ -split ",")[1] -as [int] } -Descending | Select-Object -First 1
 
@@ -50,7 +62,7 @@ try {
     } else { [int]$count }
     $marker      = if ([int]$count -gt $prevCount) { " ⬆️" } elseif ([int]$count -lt $prevCount) { " 🔻" } else { "" }
 
-    #  Discord message
+    # Discord message
     $timeOnly = Get-Date -Format "HH:mm"
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2    = "👥** $count ** total$marker"
