@@ -44,7 +44,7 @@ try {
             }
             layout = @{
                 image = @{
-                    src    = "https://imgur.com/a/2pjH0WC"
+                    src    = "https://i.imgur.com/MMleWsX.png"
                     x      = 10
                     y      = 10
                     width  = 50
