@@ -2,7 +2,7 @@
 $webhookUrl = "YOUR_DISCORD_WEBHOOK_URL"
 
 try {
-    # --- 1) FETCH HTML ---
+    # 1) FETCH HTML
     try {
         $url  = "https://www.playgenerals.online/players"
         $html = (Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop).Content
@@ -13,23 +13,23 @@ try {
         throw
     }
 
-    # --- 2) EXTRACT STATS ---
+    # 2) EXTRACT STATS
     $count  = (($html -split "Total Lifetime Players:")[1] -split "<")[0] -replace '\D',''
     $online = if ($html -match "There are (\d+) online player") { $matches[1] } else { '0' }
     Write-Host "Stats – Total:$count  Online:$online"
 
-    # --- 3) UPDATE HISTORY LOG ---
+    # 3) UPDATE HISTORY LOG
     $peakLog = "StatsHistory.txt"
     if (Test-Path $peakLog) {
         $all = Get-Content $peakLog
         if ($all.Count -ge 200) {
             Write-Host "Trimming $peakLog to last 190 entries."
-            Set-Content $peakLog $all[10..($all.Count-1)]
+            Set-Content $peakLog $all[10..($all.Count - 1)]
         }
     }
     Add-Content $peakLog "$(Get-Date -Format 'yyyy-MM-dd HH:mm'),$online,$count"
 
-    # --- 4) DAILY LAST‐LOG SNAPSHOT ---
+    # 4) DAILY LAST-LOG SNAPSHOT
     $today = Get-Date -Format 'yyyy-MM-dd'
     if ((Get-Date -Format 'HH:mm') -eq '23:59') {
         $todayLast = Get-Content $peakLog | Where-Object { $_ -match "^$today" } | Select-Object -Last 1
@@ -42,7 +42,7 @@ try {
         }
     }
 
-    # --- 5) COMPUTE PEAK & JOINED TODAY ---
+    # 5) COMPUTE PEAK & JOINED TODAY
     $todayLines = Get-Content $peakLog |
                   Where-Object { $_ -match "^$today" -and ($_ -split ',').Count -eq 3 }
     $peakEntry  = $todayLines |
@@ -64,34 +64,34 @@ try {
 
     $joinedToday = if ($todayLines.Count -ge 2) {
         [int](($todayLines[-1] -split ',')[2]) - [int](($todayLines[0] -split ',')[2])
-    } else { 0 }
+    } else {
+        0
+    }
     Write-Host "Joined today: +$joinedToday"
 
-    # --- 6) BUILD STATS LINES FOR DISCORD ---
-    $timeOnly = Get-Date -Format 'HH:mm'
-    $marker   = if ([int]$count -gt ([int]($todayLines[-2] -split ',')[2] 2>$null)) { ' ⬆️' }
-                elseif ([int]$count -lt ([int]($todayLines[-2] -split ',')[2] 2>$null)) { ' 🔻' }
-                else { '' }
+    # 6) BUILD DISCORD LINES
+    $timeOnly     = Get-Date -Format 'HH:mm'
+    $prevCountVal = if ($todayLines.Count -ge 2) { [int]($todayLines[-2] -split ',')[2] } else { [int]$count }
+    $marker       = if ([int]$count -gt $prevCountVal) { ' ⬆️' } elseif ([int]$count -lt $prevCountVal) { ' 🔻' } else { '' }
     $line1 = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2 = "👥 **$count** total$marker — **$online** Online 🟢" + (if ($isNewPeak) { ' ⬆️' } else { '' })
     $line3 = "🆕 **+$joinedToday** today"
     $line4 = $peakLine
 
-    # --- 7) VIP DETECTION & PRIORITY ---
+    # 7) VIP DETECTION & PRIORITY
     $vipMessages = @{
         '-DoMiNaToR-'  = '🚨 Domi is online — the stream is live and the chaos begins!'
-        'Kill toll^'   = '🚨 Kill toll^ is online — watch out for KT’s surprises!'
+        'Kill toll^'   = "🚨 Kill toll^ is online — watch out for KT's surprises!"
         'Mr Stratos'   = '🚨 Mr Stratos is online — join his halal lounge!'
         'OldAnalytics' = '🚨 OldAnalytics is online — ready to solve your problems!'
         'Add later'    = '🚨 Add later.'
     }
-    $vipPriority = '-DoMiNaToR-','Kill toll^','OldAnalytics','Mr Stratos','Add later'
+    $vipPriority = @('-DoMiNaToR-','Kill toll^','OldAnalytics','Mr Stratos','Add later')
 
     $players  = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
                 ForEach-Object { $_.Groups[1].Value }
     $vipOnline = $vipMessages.Keys | Where-Object { $players -match ("(?i)^" + [regex]::Escape($_) + "$") }
 
-    # pick highest-priority VIP
     $vipAlert = ''
     foreach ($vip in $vipPriority) {
         if ($vipOnline -contains $vip) {
@@ -100,13 +100,13 @@ try {
         }
     }
 
-    # --- 8) WRITE TEXT LOG ---
+    # 8) WRITE TEXT LOG
     $logText = "$line1`n$line2`n$line3`n$line4"
     if ($vipAlert) { $logText += "`n`n$vipAlert" }
     Set-Content "NewStats.txt" $logText
     Write-Host "Prepared NewStats.txt with VIP alert: '$vipAlert'"
 
-    # --- 9) QUICKCHART GRAPH ---
+    # 9) QUICKCHART GRAPH
     $chartPath   = "TodayTrend.png"
     $chartExists = $false
 
@@ -115,7 +115,7 @@ try {
         $data   = $todayLines | ForEach-Object { [int](($_ -split ',')[1]) }
 
         Write-Host "Chart labels: $($labels -join ', ')"
-        Write-Host "Chart data:  $($data   -join ', ')"
+        Write-Host "Chart data:  $($data -join ', ')"
 
         $chartConfig = @{
             type    = 'line'
@@ -153,10 +153,10 @@ try {
         }
     }
     else {
-        Write-Warning "No today’s data — skipping chart generation."
+        Write-Warning "No today's data — skipping chart generation."
     }
 
-    # --- 10) SEND TO DISCORD ---
+    # 10) SEND TO DISCORD
     try {
         if ($chartExists) {
             Write-Host "Sending stats + chart to Discord..."
@@ -168,7 +168,6 @@ try {
         }
         else {
             Write-Host "Sending text-only stats to Discord..."
-            # for pure JSON body, use payload_json too
             $json = @{ content = $logText } | ConvertTo-Json
             Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $json -ContentType 'application/json'
         }
@@ -177,7 +176,6 @@ try {
     catch {
         Write-Warning "Discord post failed: $($_.Exception.Message)"
     }
-
 }
 catch {
     Write-Error "Fatal script error: $($_.Exception.Message)"
