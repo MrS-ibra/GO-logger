@@ -67,8 +67,8 @@ try {
         throw "ImageMagick not found on this system."
     }
 
-    # Overlay logo on chart (top-left corner, 50x50)
-    & $magickPath $ChartPath $LogoPath -geometry 50x50+10+10 -composite $ChartPath
+    # Overlay logo on chart
+    & $magickPath $ChartPath $LogoPath -geometry 130x130+10+10 -composite $ChartPath
 
     # Send to Discord (image only)
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
