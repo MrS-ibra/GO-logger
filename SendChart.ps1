@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
-# showing Players Online and Players Joined (cumulative from max so far),
+# showing Players Online (green) and Players Joined (red, cumulative from max so far),
 # overlays logo (top-right) with ImageMagick, sends to Discord
 
 param(
@@ -23,7 +23,7 @@ try {
 
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Parse file into structured rows using a single pipeline
+    # Parse file into structured rows
     $rows = Get-Content $PeakLog |
         Where-Object { $_ -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},' } |
         ForEach-Object {
@@ -78,6 +78,7 @@ try {
 
     $dateLabel = (Get-Date).ToString('yyyy-MM-dd')
 
+    # Chart config: Online as green bars, Joined as red bars
     $chartConfig = @{
         type = 'bar'
         data = @{
@@ -86,23 +87,23 @@ try {
                 @{
                     label           = 'Players Online'
                     data            = $onlineData
-                    borderColor     = 'green'
-                    backgroundColor = 'rgba(0,128,0,0.2)'
-                    fill            = $false
-                    tension         = 0.1
+                    borderColor     = 'rgba(0,128,0,1)'     # solid green border
+                    backgroundColor = 'rgba(0,128,0,0.6)'   # semi-transparent green fill
+                    yAxisID         = 'y'
                 },
                 @{
                     label           = 'Players Joined'
                     data            = $joinedData
-                    borderColor     = 'red'
-                    backgroundColor = 'rgba(54,162,235,0.2)'
-                    fill            = $false
-                    tension         = 0.1
+                    borderColor     = 'rgba(255,0,0,1)'     # solid red border
+                    backgroundColor = 'rgba(255,0,0,0.6)'   # semi-transparent red fill
+                    yAxisID         = 'y1'
                 }
             )
         }
         options = @{
             responsive = $true
+            interaction = @{ mode = 'index'; intersect = $false }
+            stacked = $false
             plugins = @{
                 title = @{
                     display = $true
@@ -111,6 +112,17 @@ try {
                 legend = @{ display = $true }
             }
             scales = @{
+                y = @{
+                    type = 'linear'
+                    position = 'left'
+                    title = @{ display = $true; text = 'Online Players' }
+                }
+                y1 = @{
+                    type = 'linear'
+                    position = 'right'
+                    grid = @{ drawOnChartArea = $false }
+                    title = @{ display = $true; text = 'Players Joined' }
+                }
                 x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
             }
         }
@@ -137,8 +149,8 @@ try {
         throw "ImageMagick not found on this system."
     }
 
-    # Overlay logo in top-right
-    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry 220x220+10+10 -composite $ChartPath
+    # Overlay logo in top-right, smaller size
+    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry 80x80+10+10 -composite $ChartPath
 
     # Send to Discord
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
