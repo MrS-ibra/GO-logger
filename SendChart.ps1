@@ -15,31 +15,37 @@ try {
         throw "Stats history file not found: $PeakLog"
     }
 
-    # Cutoff for rolling 24 hours
+    # Helper: robust int parse (strips any non-digits)
+    function Normalize-Int([string]$s) {
+        $digits = ($s -replace '[^\d]', '')
+        if ([string]::IsNullOrWhiteSpace($digits)) { return 0 }
+        return [int]$digits
+    }
+
+    # Rolling 24h cutoff
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Robust CSV parse with explicit headers, then filter & sort
-    $rawLines = Get-Content $PeakLog | Where-Object { $_ -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},\d+,\d+' }
-    if (-not $rawLines -or $rawLines.Count -lt 2) {
+    # Parse file into structured rows (timestamp, online, total)
+    $rows = foreach ($line in Get-Content $PeakLog) {
+        if (-not ($line -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},')) { continue }
+        $parts = $line.Split(',', 3)
+        if ($parts.Count -ne 3) { continue }
+
+        $ts = $null
+        try { $ts = [datetime]$parts[0].Trim() } catch { continue }
+
+        [pscustomobject]@{
+            Timestamp = $ts
+            OnlineRaw = $parts[1].Trim()
+            TotalRaw  = $parts[2].Trim()
+        }
+    } | Sort-Object Timestamp
+
+    if (-not $rows -or $rows.Count -lt 2) {
         throw "Not enough data in $PeakLog"
     }
 
-    $rows = $rawLines |
-        ConvertFrom-Csv -Header Timestamp,Online,Total |
-        ForEach-Object {
-            # Safe parsing and trimming
-            $ts = $null
-            try { $ts = [datetime]($_.Timestamp) } catch { return }
-            [pscustomobject]@{
-                Timestamp = $ts
-                Online    = ([int]("$($_.Online)".Trim()))
-                Total     = ([int]("$($_.Total)".Trim()))
-            }
-        } |
-        Where-Object { $_ -ne $null } |
-        Sort-Object Timestamp
-
-    # Apply last-24h window
+    # Filter to last 24 hours
     $recent = $rows | Where-Object { $_.Timestamp -ge $cutoff }
     if ($recent.Count -lt 2) {
         throw "Not enough data in the last 24 hours in $PeakLog"
@@ -50,20 +56,36 @@ try {
     $onlineData = @()
     $joinedData = @()
 
-    for ($i = 0; $i -lt $recent.Count; $i++) {
-        $labels     += $recent[$i].Timestamp.ToString('HH:mm')
-        $onlineData += [int]$recent[$i].Online
+    $prevTotal = $null
+    $maxPlausibleJump = 50   # ignore larger jumps as scrape glitches (e.g., "024440")
 
-        if ($i -eq 0) {
-            $joinedData += 0
-        } else {
-            $delta = [int]$recent[$i].Total - [int]$recent[$i-1].Total
-            if ($delta -lt 0) { $delta = 0 }  # defensive: Total should be non-decreasing
+    foreach ($r in $recent) {
+        $labels += $r.Timestamp.ToString('HH:mm')
+
+        $online = Normalize-Int $r.OnlineRaw
+        $onlineData += $online
+
+        $currTotal = Normalize-Int $r.TotalRaw
+
+        if ($prevTotal -ne $null) {
+            # Enforce non-decreasing total; drop obvious glitches
+            if ($currTotal -lt $prevTotal) { $currTotal = $prevTotal }
+            if (($currTotal - $prevTotal) -gt $maxPlausibleJump) {
+                # Treat as glitch; hold previous total
+                $currTotal = $prevTotal
+            }
+
+            $delta = $currTotal - $prevTotal
+            if ($delta -lt 0) { $delta = 0 }  # defensive
             $joinedData += $delta
+        } else {
+            $joinedData += 0
         }
+
+        $prevTotal = $currTotal
     }
 
-    # QuickChart config: two line datasets
+    # QuickChart config with two line datasets
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -102,7 +124,7 @@ try {
         }
     } | ConvertTo-Json -Depth 10 -Compress
 
-    # Download chart PNG (your original working pattern)
+    # Download chart PNG (keep your original working pattern)
     $encodedConfig = [uri]::EscapeDataString($chartConfig)
     $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
     Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
@@ -114,7 +136,7 @@ try {
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
-    # Detect ImageMagick binary (Linux-friendly)
+    # Detect ImageMagick binary (Linux IM6 uses 'convert')
     $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
     if (-not $magickPath) {
         $magickPath = (Get-Command convert -ErrorAction SilentlyContinue)?.Source
