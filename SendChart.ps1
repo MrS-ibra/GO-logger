@@ -23,21 +23,26 @@ try {
 
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Parse file into structured rows
-    $rows = foreach ($line in Get-Content $PeakLog) {
-        if (-not ($line -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},')) { continue }
-        $parts = $line.Split(',', 3)
-        if ($parts.Count -ne 3) { continue }
+    # Parse file into structured rows using a single pipeline
+    $rows = Get-Content $PeakLog |
+        Where-Object { $_ -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},' } |
+        ForEach-Object {
+            $parts = $_.Split(',', 3)
+            if ($parts.Count -ne 3) { return }
 
-        $ts = $null
-        try { $ts = [datetime]$parts[0].Trim() } catch { continue }
+            try {
+                $ts = [datetime]$parts[0].Trim()
+            } catch {
+                return
+            }
 
-        [pscustomobject]@{
-            Timestamp = $ts
-            OnlineRaw = $parts[1].Trim()
-            TotalRaw  = $parts[2].Trim()
-        }
-    } | Sort-Object Timestamp
+            [pscustomobject]@{
+                Timestamp = $ts
+                OnlineRaw = $parts[1].Trim()
+                TotalRaw  = $parts[2].Trim()
+            }
+        } |
+        Sort-Object Timestamp
 
     if (-not $rows -or $rows.Count -lt 2) {
         throw "Not enough data in $PeakLog"
@@ -53,14 +58,14 @@ try {
     $onlineData = @()
     $joinedData = @()
 
+    # Track first total and max so far
     $firstTotal = Normalize-Int $recent[0].TotalRaw
     $maxTotal   = $firstTotal
 
     foreach ($r in $recent) {
         $labels += $r.Timestamp.ToString('HH:mm')
 
-        $online = Normalize-Int $r.OnlineRaw
-        $onlineData += $online
+        $onlineData += (Normalize-Int $r.OnlineRaw)
 
         $currTotal = Normalize-Int $r.TotalRaw
         if ($currTotal -gt $maxTotal) {
