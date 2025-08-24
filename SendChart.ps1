@@ -68,9 +68,9 @@ try {
     }
 
     # Overlay logo on chart
-    & $magickPath $ChartPath $LogoPath -geometry 220x220+10+10 -composite $ChartPath
+    & $magickPath $ChartPath $LogoPath -geometry 260x260+10+10 -composite $ChartPath
 
-    # Send to Discord (image only)
+    # Send to Discord
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
         payload_json = (@{ content = "" } | ConvertTo-Json -Compress)
         file         = Get-Item $ChartPath
