@@ -58,8 +58,17 @@ try {
     # Download logo PNG
     Invoke-WebRequest -Uri "https://i.imgur.com/MMleWsX.png" -OutFile $LogoPath -ErrorAction Stop
 
-    # Overlay logo on chart using ImageMagick (top-left corner, 50x50)
-    & magick convert $ChartPath $LogoPath -geometry 50x50+10+10 -composite $ChartPath
+    # Detect ImageMagick binary
+    $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
+    if (-not $magickPath) {
+        $magickPath = (Get-Command convert -ErrorAction SilentlyContinue)?.Source
+    }
+    if (-not $magickPath) {
+        throw "ImageMagick not found on this system."
+    }
+
+    # Overlay logo on chart (top-left corner, 50x50)
+    & $magickPath $ChartPath $LogoPath -geometry 50x50+10+10 -composite $ChartPath
 
     # Send to Discord (image only)
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
