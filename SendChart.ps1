@@ -15,47 +15,55 @@ try {
         throw "Stats history file not found: $PeakLog"
     }
 
-    # Calculate cutoff time for last 24 hours
+    # Cutoff for rolling 24 hours
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Read and filter lines newer than cutoff, ensuring valid CSV format
-    $recentLines = Get-Content $PeakLog | Where-Object {
-        $parts = $_ -split ','
-        if ($parts.Count -ne 3) { return $false }
-        try { $ts = [datetime]$parts[0] } catch { return $false }
-        return $ts -ge $cutoff
+    # Robust CSV parse with explicit headers, then filter & sort
+    $rawLines = Get-Content $PeakLog | Where-Object { $_ -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},\d+,\d+' }
+    if (-not $rawLines -or $rawLines.Count -lt 2) {
+        throw "Not enough data in $PeakLog"
     }
 
-    if ($recentLines.Count -lt 2) {
+    $rows = $rawLines |
+        ConvertFrom-Csv -Header Timestamp,Online,Total |
+        ForEach-Object {
+            # Safe parsing and trimming
+            $ts = $null
+            try { $ts = [datetime]($_.Timestamp) } catch { return }
+            [pscustomobject]@{
+                Timestamp = $ts
+                Online    = ([int]("$($_.Online)".Trim()))
+                Total     = ([int]("$($_.Total)".Trim()))
+            }
+        } |
+        Where-Object { $_ -ne $null } |
+        Sort-Object Timestamp
+
+    # Apply last-24h window
+    $recent = $rows | Where-Object { $_.Timestamp -ge $cutoff }
+    if ($recent.Count -lt 2) {
         throw "Not enough data in the last 24 hours in $PeakLog"
     }
 
-    # Build labels, online data, and joined-per-interval data
-    $labels = @()
+    # Build labels and datasets
+    $labels     = @()
     $onlineData = @()
     $joinedData = @()
 
-    for ($i = 0; $i -lt $recentLines.Count; $i++) {
-        $parts  = $recentLines[$i] -split ','
-        $ts     = [datetime]$parts[0]
-        $online = [int]$parts[1]
-        $total  = [int]$parts[2]
-
-        $labels     += $ts.ToString('HH:mm')
-        $onlineData += $online
+    for ($i = 0; $i -lt $recent.Count; $i++) {
+        $labels     += $recent[$i].Timestamp.ToString('HH:mm')
+        $onlineData += [int]$recent[$i].Online
 
         if ($i -eq 0) {
             $joinedData += 0
-        }
-        else {
-            $prevTotal = [int]($recentLines[$i-1] -split ',')[2]
-            $delta     = $total - $prevTotal
-            if ($delta -lt 0) { $delta = 0 }  # clamp negatives
+        } else {
+            $delta = [int]$recent[$i].Total - [int]$recent[$i-1].Total
+            if ($delta -lt 0) { $delta = 0 }  # defensive: Total should be non-decreasing
             $joinedData += $delta
         }
     }
 
-    # QuickChart config with two line datasets
+    # QuickChart config: two line datasets
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -86,6 +94,7 @@ try {
                     display = $true
                     text    = "Generals Online — Last 24 Hours"
                 }
+                legend = @{ display = $true }
             }
             scales = @{
                 x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
@@ -93,7 +102,7 @@ try {
         }
     } | ConvertTo-Json -Depth 10 -Compress
 
-    # Download chart PNG
+    # Download chart PNG (your original working pattern)
     $encodedConfig = [uri]::EscapeDataString($chartConfig)
     $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
     Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
@@ -105,7 +114,7 @@ try {
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
-    # Detect ImageMagick binary
+    # Detect ImageMagick binary (Linux-friendly)
     $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
     if (-not $magickPath) {
         $magickPath = (Get-Command convert -ErrorAction SilentlyContinue)?.Source
