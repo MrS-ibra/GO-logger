@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
-# showing Players Online and Players Joined per interval as lines,
-# overlays logo with ImageMagick, sends to Discord
+# showing Players Online and Players Joined (cumulative from max so far),
+# overlays logo (top-right) with ImageMagick, sends to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
@@ -15,17 +15,15 @@ try {
         throw "Stats history file not found: $PeakLog"
     }
 
-    # Helper: robust int parse (strips any non-digits)
     function Normalize-Int([string]$s) {
         $digits = ($s -replace '[^\d]', '')
         if ([string]::IsNullOrWhiteSpace($digits)) { return 0 }
         return [int]$digits
     }
 
-    # Rolling 24h cutoff
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Parse file into structured rows (timestamp, online, total)
+    # Parse file into structured rows
     $rows = foreach ($line in Get-Content $PeakLog) {
         if (-not ($line -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},')) { continue }
         $parts = $line.Split(',', 3)
@@ -51,13 +49,12 @@ try {
         throw "Not enough data in the last 24 hours in $PeakLog"
     }
 
-    # Build labels and datasets
     $labels     = @()
     $onlineData = @()
     $joinedData = @()
 
-    $prevTotal = $null
-    $maxPlausibleJump = 50   # ignore larger jumps as scrape glitches (e.g., "024440")
+    $firstTotal = Normalize-Int $recent[0].TotalRaw
+    $maxTotal   = $firstTotal
 
     foreach ($r in $recent) {
         $labels += $r.Timestamp.ToString('HH:mm')
@@ -66,26 +63,16 @@ try {
         $onlineData += $online
 
         $currTotal = Normalize-Int $r.TotalRaw
-
-        if ($prevTotal -ne $null) {
-            # Enforce non-decreasing total; drop obvious glitches
-            if ($currTotal -lt $prevTotal) { $currTotal = $prevTotal }
-            if (($currTotal - $prevTotal) -gt $maxPlausibleJump) {
-                # Treat as glitch; hold previous total
-                $currTotal = $prevTotal
-            }
-
-            $delta = $currTotal - $prevTotal
-            if ($delta -lt 0) { $delta = 0 }  # defensive
-            $joinedData += $delta
-        } else {
-            $joinedData += 0
+        if ($currTotal -gt $maxTotal) {
+            $maxTotal = $currTotal
         }
 
-        $prevTotal = $currTotal
+        # Joined = max so far minus first total in window
+        $joinedData += ($maxTotal - $firstTotal)
     }
 
-    # QuickChart config with two line datasets
+    $dateLabel = (Get-Date).ToString('yyyy-MM-dd')
+
     $chartConfig = @{
         type = 'line'
         data = @{
@@ -114,7 +101,7 @@ try {
             plugins = @{
                 title = @{
                     display = $true
-                    text    = "Generals Online — Last 24 Hours"
+                    text    = "Generals Online — Last 24 Hours ($dateLabel)"
                 }
                 legend = @{ display = $true }
             }
@@ -124,7 +111,7 @@ try {
         }
     } | ConvertTo-Json -Depth 10 -Compress
 
-    # Download chart PNG (keep your original working pattern)
+    # Download chart PNG
     $encodedConfig = [uri]::EscapeDataString($chartConfig)
     $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
     Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
@@ -136,7 +123,7 @@ try {
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
-    # Detect ImageMagick binary (Linux IM6 uses 'convert')
+    # Detect ImageMagick binary
     $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
     if (-not $magickPath) {
         $magickPath = (Get-Command convert -ErrorAction SilentlyContinue)?.Source
@@ -145,10 +132,10 @@ try {
         throw "ImageMagick not found on this system."
     }
 
-    # Overlay logo on chart
-    & $magickPath $ChartPath $LogoPath -geometry 260x260+10+10 -composite $ChartPath
+    # Overlay logo in top-right
+    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry +10+10 -composite $ChartPath
 
-    # Send to Discord (original working method)
+    # Send to Discord
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
         payload_json = (@{ content = "" } | ConvertTo-Json -Compress)
         file         = Get-Item $ChartPath
