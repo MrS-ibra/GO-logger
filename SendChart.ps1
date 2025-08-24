@@ -1,10 +1,11 @@
 #!/usr/bin/env pwsh
-# Reads StatsHistory.txt, generates a QuickChart PNG, overlays logo with ImageMagick, sends to Discord
+# Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
+# overlays logo with ImageMagick, sends to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
     [string]$PeakLog    = "StatsHistory.txt",
-    [string]$ChartPath  = "TodayTrend.png",
+    [string]$ChartPath  = "Last24hTrend.png",
     [string]$LogoPath   = "logo.png"
 )
 
@@ -13,18 +14,27 @@ try {
         throw "Stats history file not found: $PeakLog"
     }
 
-    $today = Get-Date -Format 'yyyy-MM-dd'
-    $todayLines = Get-Content $PeakLog | Where-Object {
-        ($_ -match "^$today") -and (($_ -split ',').Count -eq 3)
+    # Calculate cutoff time for last 24 hours
+    $cutoff = (Get-Date).AddHours(-24)
+
+    # Read and filter lines newer than cutoff, to ensure valid CSV format
+    $recentLines = Get-Content $PeakLog | Where-Object {
+        $parts = $_ -split ','
+        if ($parts.Count -ne 3) { return $false }
+        $ts = $null
+        if (-not [DateTime]::TryParse($parts[0], [ref]$ts)) { return $false }
+        return $ts -ge $cutoff
     }
 
-    if ($todayLines.Count -eq 0) {
-        throw "No data for $today in $PeakLog"
+    if ($recentLines.Count -eq 0) {
+        throw "No data in the last 24 hours in $PeakLog"
     }
 
-    # Build labels and data arrays
-    $labels = $todayLines | ForEach-Object { ($_.Split(',')[0]).Split(' ')[1] }
-    $data   = $todayLines | ForEach-Object { [int]($_.Split(',')[1]) }
+    # Build labels (HH:mm) and data arrays
+    $labels = $recentLines | ForEach-Object {
+        ([DateTime]($_.Split(',')[0])).ToString('HH:mm')
+    }
+    $data   = $recentLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
     # QuickChart config
     $chartConfig = @{
@@ -41,7 +51,10 @@ try {
         options = @{
             title = @{
                 display = $true
-                text    = "Generals Online — $today"
+                text    = "Generals Online — Last 24 Hours"
+            }
+            scales = @{
+                x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
             }
         }
     } | ConvertTo-Json -Depth 10 -Compress
@@ -55,7 +68,7 @@ try {
         throw "Chart file was not created."
     }
 
-    # Download logo 
+    # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
     # Detect ImageMagick binary
