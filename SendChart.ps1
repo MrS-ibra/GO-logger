@@ -1,5 +1,6 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
+# showing both Online Players and Players Joined per interval,
 # overlays logo with ImageMagick, sends to Discord
 
 param(
@@ -30,35 +31,86 @@ try {
         return $ts -ge $cutoff
     }
 
-    if ($recentLines.Count -eq 0) {
-        throw "No data in the last 24 hours in $PeakLog"
+    if ($recentLines.Count -lt 2) {
+        throw "Not enough data in the last 24 hours in $PeakLog"
     }
 
-    # Build labels (HH:mm) and data arrays
-    $labels = $recentLines | ForEach-Object {
-        ([datetime]($_.Split(',')[0])).ToString('HH:mm')
-    }
-    $data   = $recentLines | ForEach-Object { [int]($_.Split(',')[1]) }
+    # Build labels (HH:mm), online data, and joined-per-interval data
+    $labels = @()
+    $onlineData = @()
+    $joinedData = @()
 
-    # QuickChart config
+    for ($i = 0; $i -lt $recentLines.Count; $i++) {
+        $parts = $recentLines[$i] -split ','
+        $ts    = [datetime]$parts[0]
+        $online = [int]$parts[1]
+        $total  = [int]$parts[2]
+
+        $labels += $ts.ToString('HH:mm')
+        $onlineData += $online
+
+        if ($i -eq 0) {
+            $joinedData += 0
+        }
+        else {
+            $prevTotal = [int]($recentLines[$i-1] -split ',')[2]
+            $joinedData += ($total - $prevTotal)
+        }
+    }
+
+    # QuickChart config with two datasets
     $chartConfig = @{
         type = 'bar'
         data = @{
             labels   = $labels
-            datasets = @(@{
-                label       = 'Players Online'
-                data        = $data
-                borderColor = 'green'
-                fill        = $false
-            })
+            datasets = @(
+                @{
+                    type        = 'line'
+                    label       = 'Players Online'
+                    data        = $onlineData
+                    borderColor = 'green'
+                    backgroundColor = 'rgba(0,128,0,0.2)'
+                    fill        = $false
+                    yAxisID     = 'y'
+                },
+                @{
+                    type        = 'bar'
+                    label       = 'Players Joined'
+                    data        = $joinedData
+                    backgroundColor = 'rgba(54, 162, 235, 0.5)'
+                    borderColor = 'rgba(54, 162, 235, 1)'
+                    yAxisID     = 'y1'
+                }
+            )
         }
         options = @{
-            title = @{
-                display = $true
-                text    = "Generals Online — Last 24 Hours"
+            responsive = $true
+            interaction = @{
+                mode = 'index'
+                intersect = $false
+            }
+            stacked = $false
+            plugins = @{
+                title = @{
+                    display = $true
+                    text    = "Generals Online — Last 24 Hours"
+                }
             }
             scales = @{
-                x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
+                y = @{
+                    type = 'linear'
+                    position = 'left'
+                    title = @{ display = $true; text = 'Online Players' }
+                }
+                y1 = @{
+                    type = 'linear'
+                    position = 'right'
+                    grid = @{ drawOnChartArea = $false }
+                    title = @{ display = $true; text = 'Players Joined' }
+                }
+                x = @{
+                    ticks = @{ maxRotation = 90; minRotation = 90 }
+                }
             }
         }
     } | ConvertTo-Json -Depth 10 -Compress
