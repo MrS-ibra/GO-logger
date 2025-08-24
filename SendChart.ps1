@@ -28,7 +28,7 @@ try {
 
     # QuickChart config
     $chartConfig = @{
-        type = 'line'
+        type = 'bar'
         data = @{
             labels   = $labels
             datasets = @(@{
