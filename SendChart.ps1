@@ -17,12 +17,16 @@ try {
     # Calculate cutoff time for last 24 hours
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Read and filter lines newer than cutoff, to ensure valid CSV format
+    # Read and filter lines newer than cutoff, ensuring valid CSV format
     $recentLines = Get-Content $PeakLog | Where-Object {
         $parts = $_ -split ','
         if ($parts.Count -ne 3) { return $false }
-        $ts = $null
-        if (-not [DateTime]::TryParse($parts[0], [ref]$ts)) { return $false }
+        try {
+            $ts = [datetime]$parts[0]
+        }
+        catch {
+            return $false
+        }
         return $ts -ge $cutoff
     }
 
@@ -32,7 +36,7 @@ try {
 
     # Build labels (HH:mm) and data arrays
     $labels = $recentLines | ForEach-Object {
-        ([DateTime]($_.Split(',')[0])).ToString('HH:mm')
+        ([datetime]($_.Split(',')[0])).ToString('HH:mm')
     }
     $data   = $recentLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
