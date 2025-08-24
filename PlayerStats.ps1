@@ -13,7 +13,7 @@ try {
     # trim history to last 190 lines if >200
     if (Test-Path $peakLog) {
         $all = Get-Content $peakLog
-        if ($all.Count -ge 200) {
+        if ($all.Count -ge 2000) {
             Set-Content $peakLog $all[10..($all.Count - 1)]
         }
     }
