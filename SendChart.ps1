@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
-# showing Players Online (line) and Players Joined (red bars, cumulative from max so far),
+# showing Players Online and Players Joined (cumulative from max so far),
 # overlays logo (top-right) with ImageMagick, sends to Discord
 
 param(
@@ -23,7 +23,7 @@ try {
 
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Parse file into structured rows
+    # Parse file into structured rows using a single pipeline
     $rows = Get-Content $PeakLog |
         Where-Object { $_ -match '^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2},' } |
         ForEach-Object {
@@ -78,36 +78,31 @@ try {
 
     $dateLabel = (Get-Date).ToString('yyyy-MM-dd')
 
-    # Chart config: Online as line, Joined as red bars
     $chartConfig = @{
-        type = 'bar'
+        type = 'line'
         data = @{
             labels   = $labels
             datasets = @(
                 @{
-                    type            = 'line'
                     label           = 'Players Online'
                     data            = $onlineData
                     borderColor     = 'green'
                     backgroundColor = 'rgba(0,128,0,0.2)'
                     fill            = $false
                     tension         = 0.1
-                    yAxisID         = 'y'
                 },
                 @{
-                    type            = 'bar'
                     label           = 'Players Joined'
                     data            = $joinedData
-                    backgroundColor = 'rgba(255,0,0,0.6)'
-                    borderColor     = 'rgba(255,0,0,1)'
-                    yAxisID         = 'y1'
+                    borderColor     = 'blue'
+                    backgroundColor = 'rgba(54,162,235,0.2)'
+                    fill            = $false
+                    tension         = 0.1
                 }
             )
         }
         options = @{
             responsive = $true
-            interaction = @{ mode = 'index'; intersect = $false }
-            stacked = $false
             plugins = @{
                 title = @{
                     display = $true
@@ -116,17 +111,6 @@ try {
                 legend = @{ display = $true }
             }
             scales = @{
-                y = @{
-                    type = 'linear'
-                    position = 'left'
-                    title = @{ display = $true; text = 'Online Players' }
-                }
-                y1 = @{
-                    type = 'linear'
-                    position = 'right'
-                    grid = @{ drawOnChartArea = $false }
-                    title = @{ display = $true; text = 'Players Joined' }
-                }
                 x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
             }
         }
@@ -154,7 +138,7 @@ try {
     }
 
     # Overlay logo in top-right
-    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry 260x260+10+10 -composite $ChartPath
+    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry 80x80+10+10 -composite $ChartPath
 
     # Send to Discord
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
