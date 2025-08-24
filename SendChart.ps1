@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
-# showing Players Online and Players Joined (cumulative from max so far) as bars,
+# showing Players Online (line) and Players Joined (red bars, cumulative from max so far),
 # overlays logo (top-right) with ImageMagick, sends to Discord
 
 param(
@@ -78,20 +78,24 @@ try {
 
     $dateLabel = (Get-Date).ToString('yyyy-MM-dd')
 
-    # Chart config: both datasets as bars, Players Joined in red
+    # Chart config: Online as line, Joined as red bars
     $chartConfig = @{
         type = 'bar'
         data = @{
             labels   = $labels
             datasets = @(
                 @{
+                    type            = 'line'
                     label           = 'Players Online'
                     data            = $onlineData
-                    backgroundColor = 'rgba(0,128,0,0.6)'
-                    borderColor     = 'rgba(0,128,0,1)'
+                    borderColor     = 'green'
+                    backgroundColor = 'rgba(0,128,0,0.2)'
+                    fill            = $false
+                    tension         = 0.1
                     yAxisID         = 'y'
                 },
                 @{
+                    type            = 'bar'
                     label           = 'Players Joined'
                     data            = $joinedData
                     backgroundColor = 'rgba(255,0,0,0.6)'
