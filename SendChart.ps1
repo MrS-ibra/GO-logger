@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
-# showing both Online Players and Players Joined per interval,
-# overlays logo with ImageMagick composite (IM6-safe), sends to Discord
+# showing Players Online and Players Joined per interval as lines,
+# overlays logo with ImageMagick, sends to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
@@ -30,7 +30,7 @@ try {
         throw "Not enough data in the last 24 hours in $PeakLog"
     }
 
-    # Build labels (HH:mm), online data, and joined-per-interval data
+    # Build labels, online data, and joined-per-interval data
     $labels = @()
     $onlineData = @()
     $joinedData = @()
@@ -53,38 +53,32 @@ try {
         }
     }
 
-    # QuickChart config with two datasets
+    # QuickChart config with two line datasets
     $chartConfig = @{
-        type = 'bar'
+        type = 'line'
         data = @{
             labels   = $labels
             datasets = @(
                 @{
-                    type        = 'line'
-                    label       = 'Players Online'
-                    data        = $onlineData
-                    borderColor = 'green'
+                    label           = 'Players Online'
+                    data            = $onlineData
+                    borderColor     = 'green'
                     backgroundColor = 'rgba(0,128,0,0.2)'
-                    fill        = $false
-                    yAxisID     = 'y'
+                    fill            = $false
+                    tension         = 0.1
                 },
                 @{
-                    type        = 'bar'
-                    label       = 'Players Joined'
-                    data        = $joinedData
-                    backgroundColor = 'rgba(54, 162, 235, 0.5)'
-                    borderColor = 'rgba(54, 162, 235, 1)'
-                    yAxisID     = 'y1'
+                    label           = 'Players Joined'
+                    data            = $joinedData
+                    borderColor     = 'blue'
+                    backgroundColor = 'rgba(54,162,235,0.2)'
+                    fill            = $false
+                    tension         = 0.1
                 }
             )
         }
         options = @{
             responsive = $true
-            interaction = @{
-                mode = 'index'
-                intersect = $false
-            }
-            stacked = $false
             plugins = @{
                 title = @{
                     display = $true
@@ -92,55 +86,34 @@ try {
                 }
             }
             scales = @{
-                y = @{
-                    type = 'linear'
-                    position = 'left'
-                    title = @{ display = $true; text = 'Online Players' }
-                }
-                y1 = @{
-                    type = 'linear'
-                    position = 'right'
-                    grid = @{ drawOnChartArea = $false }
-                    title = @{ display = $true; text = 'Players Joined' }
-                }
-                x = @{
-                    ticks = @{ maxRotation = 90; minRotation = 90 }
-                }
+                x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
             }
         }
     } | ConvertTo-Json -Depth 10 -Compress
 
-    # Download chart PNG via POST to avoid URL length issues
-    Invoke-WebRequest -Uri "https://quickchart.io/chart" `
-        -Method Post `
-        -ContentType "application/json" `
-        -Body $chartConfig `
-        -OutFile $ChartPath `
-        -ErrorAction Stop
+    # Download chart PNG
+    $encodedConfig = [uri]::EscapeDataString($chartConfig)
+    $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
+    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
 
     if (-not (Test-Path $ChartPath)) {
         throw "Chart file was not created."
     }
 
-    # Validate PNG magic bytes before sending
-    $bytes = [System.IO.File]::ReadAllBytes($ChartPath)
-    if ($bytes.Length -lt 4 -or $bytes[0] -ne 0x89 -or $bytes[1] -ne 0x50 -or $bytes[2] -ne 0x4E -or $bytes[3] -ne 0x47) {
-        throw "Chart file is not a valid PNG — QuickChart may have returned an error page."
-    }
-
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
-    # Detect ImageMagick composite tool (IM6-safe)
-    $compositePath = (Get-Command composite -ErrorAction SilentlyContinue)?.Source
-    if (-not $compositePath) {
-        throw "ImageMagick 'composite' command not found."
+    # Detect ImageMagick binary
+    $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
+    if (-not $magickPath) {
+        $magickPath = (Get-Command convert -ErrorAction SilentlyContinue)?.Source
+    }
+    if (-not $magickPath) {
+        throw "ImageMagick not found on this system."
     }
 
-    # Overlay logo on chart to a temp file, then replace original
-    $tempChart = [System.IO.Path]::GetTempFileName()
-    & $compositePath -geometry 260x260+10+10 $LogoPath $ChartPath $tempChart
-    Move-Item -Force $tempChart $ChartPath
+    # Overlay logo on chart
+    & $magickPath $ChartPath $LogoPath -geometry 260x260+10+10 -composite $ChartPath
 
     # Send to Discord (original working method)
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
