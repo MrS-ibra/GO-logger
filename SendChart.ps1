@@ -79,7 +79,7 @@ try {
     $dateLabel = (Get-Date).ToString('yyyy-MM-dd')
 
     $chartConfig = @{
-        type = 'line'
+        type = 'bar'
         data = @{
             labels   = $labels
             datasets = @(
@@ -94,7 +94,7 @@ try {
                 @{
                     label           = 'Players Joined'
                     data            = $joinedData
-                    borderColor     = 'blue'
+                    borderColor     = 'red'
                     backgroundColor = 'rgba(54,162,235,0.2)'
                     fill            = $false
                     tension         = 0.1
