@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
 # showing both Online Players and Players Joined per interval,
-# overlays logo with ImageMagick, sends to Discord
+# overlays logo with ImageMagick composite (IM6-safe), sends to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
@@ -131,17 +131,16 @@ try {
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
-    # Detect ImageMagick binary
-    $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
-    if (-not $magickPath) {
-        $magickPath = (Get-Command convert -ErrorAction SilentlyContinue)?.Source
-    }
-    if (-not $magickPath) {
-        throw "ImageMagick not found on this system."
+    # Detect ImageMagick composite tool (IM6-safe)
+    $compositePath = (Get-Command composite -ErrorAction SilentlyContinue)?.Source
+    if (-not $compositePath) {
+        throw "ImageMagick 'composite' command not found."
     }
 
-    # Overlay logo on chart
-    & $magickPath $ChartPath $LogoPath -geometry 260x260+10+10 -composite $ChartPath
+    # Overlay logo on chart to a temp file, then replace original
+    $tempChart = [System.IO.Path]::GetTempFileName()
+    & $compositePath -geometry 260x260+10+10 $LogoPath $ChartPath $tempChart
+    Move-Item -Force $tempChart $ChartPath
 
     # Send to Discord (original working method)
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
