@@ -10,9 +10,6 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Install PowerShell
-        uses: PowerShell/PowerShell-For-GitHub-Actions@v1
-
       - name: Install ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
