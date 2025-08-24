@@ -154,7 +154,7 @@ try {
     }
 
     # Overlay logo in top-right
-    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry +10+10 -composite $ChartPath
+    & $magickPath $ChartPath $LogoPath -gravity NorthEast -geometry 260x260+10+10 -composite $ChartPath
 
     # Send to Discord
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
