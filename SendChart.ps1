@@ -28,7 +28,7 @@ try {
 
     # QuickChart config
     $chartConfig = @{
-        type = 'bubble'
+        type = 'doughnut'
         data = @{
             labels   = $labels
             datasets = @(@{
