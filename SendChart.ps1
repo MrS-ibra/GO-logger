@@ -139,11 +139,23 @@ try {
     # Overlay logo on chart
     & $magickPath $ChartPath $LogoPath -geometry 260x260+10+10 -composite $ChartPath
 
-    # Send to Discord
-    Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
-        payload_json = (@{ content = "" } | ConvertTo-Json -Compress)
-        file         = Get-Item $ChartPath
-    }
+    # --- Cross-platform safe Discord upload ---
+    $fs = [System.IO.File]::OpenRead($ChartPath)
+    $mp = New-Object System.Net.Http.MultipartFormDataContent
+
+    $fileContent = New-Object System.Net.Http.StreamContent($fs)
+    $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("image/png")
+    $mp.Add($fileContent, "file", [System.IO.Path]::GetFileName($ChartPath))
+
+    $payloadContent = New-Object System.Net.Http.StringContent('{"content":""}', [System.Text.Encoding]::UTF8, "application/json")
+    $mp.Add($payloadContent, "payload_json")
+
+    $client = New-Object System.Net.Http.HttpClient
+    $response = $client.PostAsync($WebhookUrl, $mp).Result
+    $response.EnsureSuccessStatusCode()
+
+    $fs.Dispose()
+    $client.Dispose()
 
 }
 catch {
