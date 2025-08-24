@@ -55,8 +55,8 @@ try {
         throw "Chart file was not created."
     }
 
-    # Download logo PNG
-    Invoke-WebRequest -Uri "https://i.imgur.com/MMleWsX.png" -OutFile $LogoPath -ErrorAction Stop
+    # Download logo 
+    Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
 
     # Detect ImageMagick binary
     $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
