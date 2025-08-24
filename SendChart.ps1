@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Reads StatsHistory.txt, generates a QuickChart PNG for the last 24 hours,
 # showing Players Online (line) and Players Joined per interval (bars),
-# overlays logo with ImageMagick, sends to Discord (Linux-safe)
+# overlays logo with ImageMagick (Linux-safe), sends to Discord
 
 param(
     [string]$WebhookUrl = $env:DISCORD_WEBHOOK,
@@ -18,7 +18,7 @@ try {
     # Last 24 hours cutoff
     $cutoff = (Get-Date).AddHours(-24)
 
-    # Read and filter lines within window, ensure CSV format, robust timestamp parse
+    # Read and filter lines within window, ensure CSV format
     $recentLines = Get-Content $PeakLog | Where-Object {
         $parts = $_ -split ','
         if ($parts.Count -ne 3) { return $false }
@@ -30,7 +30,7 @@ try {
         throw "Not enough data in the last 24 hours in $PeakLog"
     }
 
-    # Build labels (HH:mm), online data, and joined-per-interval from TOTAL column (index 2)
+    # Build labels, online data, and joined-per-interval from TOTAL column
     $labels = @()
     $onlineData = @()
     $joinedData = @()
@@ -49,7 +49,7 @@ try {
         } else {
             $prevTotal = [int]($recentLines[$i-1] -split ',')[2]
             $delta     = $total - $prevTotal
-            if ($delta -lt 0) { $delta = 0 }  # defensive clamp; total should be non-decreasing
+            if ($delta -lt 0) { $delta = 0 }  # defensive clamp
             $joinedData += $delta
         }
     }
@@ -105,19 +105,22 @@ try {
         }
     } | ConvertTo-Json -Depth 10 -Compress
 
-    # Get chart PNG via GET (matches your working pattern)
-    $encodedConfig = [uri]::EscapeDataString($chartConfig)
-    $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
-    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
+    # Download chart PNG via POST (avoids URL length issues)
+    Invoke-WebRequest -Uri "https://quickchart.io/chart" `
+        -Method Post `
+        -ContentType "application/json" `
+        -Body $chartConfig `
+        -OutFile $ChartPath `
+        -ErrorAction Stop
 
     if (-not (Test-Path $ChartPath)) {
         throw "Chart file was not created."
     }
 
-    # Minimal PNG sanity check (magic header) before overlay/upload
+    # Validate PNG magic bytes before overlay/upload
     $bytes = [System.IO.File]::ReadAllBytes($ChartPath)
     if ($bytes.Length -lt 4 -or $bytes[0] -ne 0x89 -or $bytes[1] -ne 0x50 -or $bytes[2] -ne 0x4E -or $bytes[3] -ne 0x47) {
-        throw "Chart file is not a PNG — QuickChart likely returned an error page."
+        throw "Chart file is not a PNG — QuickChart may have returned an error page."
     }
 
     # Download logo
@@ -140,7 +143,7 @@ try {
         & $magickPath $ChartPath $LogoPath -geometry 260x260+10+10 -composite $ChartPath
     }
 
-    # Send to Discord (your original working method)
+    # Send to Discord (original working method)
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
         payload_json = (@{ content = "" } | ConvertTo-Json -Compress)
         file         = Get-Item $ChartPath
