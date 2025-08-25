@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
   Builds a cumulative bar chart of new-player joins over the last available logs
-  (up to 7 days back), split into a configurable number of equal slots (default 20),
-  renders data labels, applies your Imgur logo as a watermark, and posts it to Discord.
+  (up to 7 days back), split into a minimum of 20 equal slots, shows data labels,
+  applies your Imgur logo as a watermark, and posts it to Discord.
 .PARAMETER Slots
   Number of time buckets (bars) to display; default is 20.
 #>
@@ -17,7 +17,7 @@ $webhookUrl  = $env:DISCORD_WEBHOOK
 $logoUrl     = 'https://i.imgur.com/Zdufcwx.jpeg'
 
 if (-not (Test-Path $historyFile)) {
-    Write-Error "StatsHistory.txt not found at $historyFile"
+    Write-Error "StatsHistory.txt not found"
     exit 1
 }
 
@@ -31,7 +31,7 @@ $entries = Get-Content $historyFile | ForEach-Object {
 } | Sort-Object DateTime
 
 if ($entries.Count -eq 0) {
-    Write-Error "No log entries found."
+    Write-Error "No log entries"
     exit 1
 }
 
@@ -42,7 +42,7 @@ $minStart      = $latestTime.AddDays(-7)
 $startTime     = if ($earliestTime -lt $minStart) { $minStart } else { $earliestTime }
 $totalDuration = $latestTime - $startTime
 
-# 3. Compute slot duration
+# 3. Compute slot duration (always Slots buckets)
 $slotDuration = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
 
 # 4. Build cumulative data + labels
@@ -54,24 +54,24 @@ for ($i = 0; $i -lt $Slots; $i++) {
     $bStart = $startTime + ($slotDuration * $i)
     $bEnd   = $startTime + ($slotDuration * ($i + 1))
 
-    # last log ≤ bucket start
+    # Last log ≤ bucket start
     $prevLog = $entries |
         Where-Object { $_.DateTime -le $bStart } |
         Sort-Object DateTime -Descending |
         Select-Object -First 1
     if (-not $prevLog) { $prevLog = $entries[0] }
 
-    # last log ≤ bucket end
+    # Last log ≤ bucket end
     $endLog = $entries |
         Where-Object { $_.DateTime -le $bEnd } |
         Sort-Object DateTime -Descending |
         Select-Object -First 1
 
-    # raw joins in this slot
+    # Raw joins in this slot
     $joined = if ($endLog) { $endLog.Total - $prevLog.Total } else { 0 }
     if ($joined -gt 0) { $cumulative += $joined }
 
-    # smart label: multi-day vs single-day format
+    # Smart label: if >1 day range then show date + time; else just time
     if ($totalDuration.TotalDays -gt 1) {
         $labels += $bStart.ToString('MM-dd HH:mm')
     } else {
@@ -81,10 +81,10 @@ for ($i = 0; $i -lt $Slots; $i++) {
     $data += $cumulative
 }
 
-# 5. QuickChart JSON with datalabels plugin
-$chart = @{
-    type    = 'bar'
-    data    = @{
+# 5. Build QuickChart JSON with datalabels & watermark plugin
+$chartConfig = @{
+    type = 'bar'
+    data = @{
         labels   = $labels
         datasets = @(@{
             data            = $data
@@ -112,23 +112,28 @@ $chart = @{
                 formatter = 'function(v){return v;}'
                 font      = @{ size = 12 }
             }
+            watermark = @{
+                image    = $logoUrl
+                position = 'topRight'
+                width    = 40
+                opacity  = 0.5
+            }
         }
         layout = @{ padding = @{ top = 20; bottom = 10 } }
     }
 } | ConvertTo-Json -Depth 6
 
-# 6. Render chart & apply watermark via QuickChart watermark endpoint
-$enc     = [uri]::EscapeDataString($chart)
-$baseUrl = "https://quickchart.io/chart?c=$enc&width=900&height=400&format=png&plugins=chartjs-plugin-datalabels"
-$wmUrl   = "https://quickchart.io/watermark?mainImageUrl=$([uri]::EscapeDataString($baseUrl))&markImageUrl=$([uri]::EscapeDataString($logoUrl))&position=topRight&opacity=0.5&imageWidth=40&margin=0"
+# 6. Render chart (with both plugins) at 1200x600
+$encoded = [System.Net.WebUtility]::UrlEncode($chartConfig)
+$plugins = 'chartjs-plugin-datalabels,chartjs-plugin-watermark'
+$uri     = "https://quickchart.io/chart?c=$encoded&width=1200&height=600&format=png&plugins=$plugins"
 
-Invoke-WebRequest -Uri $wmUrl -OutFile $outputImage
+Invoke-WebRequest -Uri $uri -OutFile $outputImage
 
-# 7. Send to Discord (embed only, webhook’s default name preserved)
+# 7. Post to Discord (embed only, preserve Spy Drone name)
 $payload = @{
     embeds = @(@{ image = @{ url = 'attachment://NewPlayersChart.png' } })
 }
-
 $payloadJson = $payload | ConvertTo-Json -Depth 5
 
 Invoke-RestMethod -Uri $webhookUrl `
@@ -139,4 +144,4 @@ Invoke-RestMethod -Uri $webhookUrl `
         file1        = Get-Item $outputImage
     }
 
-Write-Host "Posted $Slots slots over $([math]::Round($totalDuration.TotalDays,2)) days; cumulative = $cumulative."
+Write-Host "Posted $Slots slots over $([math]::Round($totalDuration.TotalDays,2)) days; cumulative=$cumulative."
