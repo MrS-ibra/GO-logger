@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-  Builds a bar chart of new players over the last 7 days (or, if fewer daily logs exist,
-  over the last N intervals based on raw logs), then sends it to Discord.
+  Builds a bar chart of new players over the last N days (or, if fewer daily logs exist,
+  over the last N log-intervals), then sends it to Discord.
 
 .PARAMETER Days
   Number of days to target for "daily" mode (default = 7).
@@ -10,7 +10,7 @@ param(
     [int]$Days = 7
 )
 
-# Paths & settings
+# Paths & Settings
 $historyFile = Join-Path $PSScriptRoot 'StatsHistory.txt'
 $outputImage = Join-Path $PSScriptRoot 'NewPlayersChart.png'
 $webhookUrl  = $env:DISCORD_WEBHOOK
@@ -20,7 +20,7 @@ if (-not (Test-Path $historyFile)) {
     exit 1
 }
 
-# 1. Load raw logs: "yyyy-MM-dd HH:mm,online,total"
+# 1. Load raw logs ("yyyy-MM-dd HH:mm,online,total")
 $entries = Get-Content $historyFile | ForEach-Object {
     $parts = $_ -split ','
     [PSCustomObject]@{
@@ -29,27 +29,26 @@ $entries = Get-Content $historyFile | ForEach-Object {
     }
 } | Sort-Object DateTime
 
-# 2. Extract last log per calendar day
+# 2. Extract last record of each calendar day
 $dailyTotals = $entries `
   | Group-Object { $_.DateTime.Date } `
   | ForEach-Object { $_.Group | Sort-Object DateTime | Select-Object -Last 1 } `
   | Sort-Object DateTime
 
-# 3. Decide whether to use daily buckets or raw‐interval buckets
+# 3. Decide bucket mode
 if ($dailyTotals.Count - 1 -ge $Days) {
     Write-Host "Using daily buckets (found $($dailyTotals.Count) days of logs)."
-    $window = $dailyTotals | Select-Object -Last ($Days + 1)
+    $window      = $dailyTotals | Select-Object -Last ($Days + 1)
     $labelFormat = 'MM-dd'
 }
 else {
-    Write-Host "Not enough full days ($($dailyTotals.Count)); using raw‐interval buckets."
-    # Determine how many raw records we need: Days+1 or as many as exist
+    Write-Host "Not enough full days ($($dailyTotals.Count)); using raw-interval buckets."
     $countNeeded = [math]::Min($entries.Count, $Days + 1)
-    $window = $entries | Select-Object -Last $countNeeded
+    $window      = $entries | Select-Object -Last $countNeeded
     $labelFormat = 'MM-dd HH:mm'
 }
 
-# 4. Build labels & compute delta between adjacent window entries
+# 4. Build labels & compute deltas
 $labels = @()
 $data   = @()
 
@@ -66,8 +65,8 @@ if ($labels.Count -eq 0) {
     Write-Warning "Only one (or zero) log entries available; chart will be empty."
 }
 
-# 5. Build QuickChart JSON payload
-$chart = @{
+# 5. Build QuickChart configuration
+$chartConfig = @{
     type = 'bar'
     data = @{
         labels   = $labels
@@ -88,23 +87,25 @@ $chart = @{
     }
 } | ConvertTo-Json -Depth 5
 
-# 6. Download chart PNG
-$encoded = [System.Net.WebUtility]::UrlEncode($chart)
+# 6. Download the chart PNG
+$encoded = [System.Net.WebUtility]::UrlEncode($chartConfig)
 $uri     = "https://quickchart.io/chart?c=$encoded"
 Invoke-WebRequest -Uri $uri -OutFile $outputImage
 
-# 7. Post to Discord
+# 7. Send to Discord (with proper JSON depth)
 $payload = @{
     username = 'GO-Logger'
     content  = "Here’s the new-player join chart for the last $($labels.Count) interval(s):"
     embeds   = @(@{ image = @{ url = 'attachment://NewPlayersChart.png' } })
-} | ConvertTo-Json
+}
+
+$payloadJson = $payload | ConvertTo-Json -Depth 5
 
 Invoke-RestMethod -Uri $webhookUrl `
     -Method Post `
     -ContentType 'multipart/form-data' `
     -Form @{
-        payload_json = $payload
+        payload_json = $payloadJson
         file1        = Get-Item $outputImage
     }
 
