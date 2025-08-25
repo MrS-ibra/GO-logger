@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-  Builds a bar chart of new-player joins over the last available logs (max 7 days),
+  Builds a cumulative bar chart of new-player joins over the last available logs (max 7 days),
   dividing the range into a fixed number of slots, and posts it to Discord.
 .PARAMETER Slots
   Number of time buckets (bars) to display.
 #>
 param(
-    [int]$Slots = 12
+    [int]$Slots = 18
 )
 
 # Paths & Settings
@@ -34,39 +34,34 @@ if (-not $entries) {
 }
 
 # 2. Determine dynamic time range (max 7 days)
-$latestTime = $entries[-1].DateTime
+$latestTime   = $entries[-1].DateTime
 $earliestTime = $entries[0].DateTime
-$minStart = $latestTime.AddDays(-7)
+$minStart     = $latestTime.AddDays(-7)
 
-if ($earliestTime -lt $minStart) {
-    $startTime = $minStart
-} else {
-    $startTime = $earliestTime
-}
-
-$endTime = $latestTime
+$startTime = if ($earliestTime -lt $minStart) { $minStart } else { $earliestTime }
+$endTime   = $latestTime
 
 # 3. Calculate slot duration
 $totalDuration = $endTime - $startTime
 $slotDuration  = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
 
-# 4. Build labels & compute joins per slot
+# 4. Build labels & compute cumulative joins per slot
 $labels = @()
 $data   = @()
+$cumulative = 0
 
 for ($i = 0; $i -lt $Slots; $i++) {
     $bStart = $startTime + ($slotDuration * $i)
     $bEnd   = $startTime + ($slotDuration * ($i + 1))
 
-    # Find the last log before or at the start of the bucket
+    # Last log before/at bucket start
     $prevLog = $entries |
         Where-Object { $_.DateTime -le $bStart } |
         Sort-Object DateTime -Descending |
         Select-Object -First 1
-
     if (-not $prevLog) { $prevLog = $entries | Select-Object -First 1 }
 
-    # Find the last log before or at the end of the bucket
+    # Last log before/at bucket end
     $endLog = $entries |
         Where-Object { $_.DateTime -le $bEnd } |
         Sort-Object DateTime -Descending |
@@ -74,27 +69,32 @@ for ($i = 0; $i -lt $Slots; $i++) {
 
     $joined = 0
     if ($endLog) {
-        $joined = [Math]::Max(0, $endLog.Total - $prevLog.Total)
+        $joined = $endLog.Total - $prevLog.Total
     }
 
-    # Label format depends on total range
+    if ($joined -gt 0) {
+        $cumulative += $joined
+    }
+    # If joined <= 0, keep cumulative as-is
+
+    # Label format
     if ($totalDuration.TotalDays -gt 1) {
         $labels += $bStart.ToString('MM-dd HH:mm')
     } else {
         $labels += $bStart.ToString('HH:mm')
     }
 
-    $data += $joined
+    $data += $cumulative
 }
 
-# 5. QuickChart configuration (red bars, no title, watermark logo)
+# 5. QuickChart configuration (blue bars, no title, watermark logo)
 $chartConfig = @{
     type = 'bar'
     data = @{
         labels   = $labels
         datasets = @(@{
             data            = $data
-            backgroundColor = 'rgba(255,99,132,0.6)'
+            backgroundColor = 'rgba(54,162,235,0.7)'
         })
     }
     options = @{
@@ -124,12 +124,12 @@ $chartConfig = @{
     }
 } | ConvertTo-Json -Depth 6
 
-# 6. Download chart PNG
+# 6. Download chart PNG (with watermark plugin enabled)
 $encoded = [System.Net.WebUtility]::UrlEncode($chartConfig)
-$uri     = "https://quickchart.io/chart?c=$encoded&width=800&height=400&format=png"
+$uri     = "https://quickchart.io/chart?c=$encoded&width=900&height=400&format=png&plugins=watermark"
 Invoke-WebRequest -Uri $uri -OutFile $outputImage
 
-# 7. Send to Discord
+# 7. Send to Discord (embed only, keep webhook's default name)
 $payload = @{
     embeds = @(@{ image = @{ url = 'attachment://NewPlayersChart.png' } })
 }
