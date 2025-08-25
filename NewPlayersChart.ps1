@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
   Builds a bar chart of new players over the last N days (or, if fewer daily logs exist,
-  over the last N log-intervals), then sends it to Discord.
-
+  over the last N log-intervals), then sends it to Discord with simple labels and the
+  webhook’s default bot name.
 .PARAMETER Days
   Number of days to target for "daily" mode (default = 7).
 #>
@@ -10,7 +10,7 @@ param(
     [int]$Days = 7
 )
 
-# Paths & Settings
+# Paths & settings
 $historyFile = Join-Path $PSScriptRoot 'StatsHistory.txt'
 $outputImage = Join-Path $PSScriptRoot 'NewPlayersChart.png'
 $webhookUrl  = $env:DISCORD_WEBHOOK
@@ -36,16 +36,16 @@ $dailyTotals = $entries `
   | Sort-Object DateTime
 
 # 3. Decide bucket mode
-if ($dailyTotals.Count - 1 -ge $Days) {
+$usingDaily = ($dailyTotals.Count - 1 -ge $Days)
+
+if ($usingDaily) {
     Write-Host "Using daily buckets (found $($dailyTotals.Count) days of logs)."
-    $window      = $dailyTotals | Select-Object -Last ($Days + 1)
-    $labelFormat = 'MM-dd'
+    $window = $dailyTotals | Select-Object -Last ($Days + 1)
 }
 else {
     Write-Host "Not enough full days ($($dailyTotals.Count)); using raw-interval buckets."
     $countNeeded = [math]::Min($entries.Count, $Days + 1)
     $window      = $entries | Select-Object -Last $countNeeded
-    $labelFormat = 'MM-dd HH:mm'
 }
 
 # 4. Build labels & compute deltas
@@ -57,8 +57,16 @@ for ($i = 1; $i -lt $window.Count; $i++) {
     $cur    = $window[$i]
     $joined = $cur.Total - $prev.Total
 
-    $labels += $cur.DateTime.ToString($labelFormat)
-    $data   += $joined
+    if ($usingDaily) {
+        # Day 1 = oldest → Day N = most recent
+        $labels += "Day $i"
+    }
+    else {
+        # Slot 1 = oldest interval → Slot N = most recent
+        $labels += "Slot $i"
+    }
+
+    $data += $joined
 }
 
 if ($labels.Count -eq 0) {
@@ -79,7 +87,7 @@ $chartConfig = @{
     options = @{
         title = @{
             display = $true
-            text    = "New Players Joined (Last $($labels.Count) Interval(s))"
+            text    = "New Players Joined"
         }
         scales = @{
             yAxes = @(@{ ticks = @{ beginAtZero = $true } })
@@ -92,11 +100,13 @@ $encoded = [System.Net.WebUtility]::UrlEncode($chartConfig)
 $uri     = "https://quickchart.io/chart?c=$encoded"
 Invoke-WebRequest -Uri $uri -OutFile $outputImage
 
-# 7. Send to Discord (with proper JSON depth)
+# 7. Send to Discord (omit username to keep webhook’s default name)
 $payload = @{
-    username = 'GO-Logger'
-    content  = "Here’s the new-player join chart for the last $($labels.Count) interval(s):"
-    embeds   = @(@{ image = @{ url = 'attachment://NewPlayersChart.png' } })
+    content = "Here's the new player join chart:"
+    embeds  = @(@{
+        title = "New Players Joined"
+        image = @{ url = 'attachment://NewPlayersChart.png' }
+    })
 }
 
 $payloadJson = $payload | ConvertTo-Json -Depth 5
