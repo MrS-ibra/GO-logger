@@ -19,4 +19,4 @@ jobs:
       - name: Run SendJoinChart.ps1
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: pwsh ./NewPlayersChart.ps1.ps1 -Days 7
+        run: pwsh ./NewPlayersChart.ps1 -Days 7
