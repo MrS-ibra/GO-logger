@@ -1,4 +1,4 @@
-name: Send 7-Day New Players Chart to Discord
+name: Send New Players Chart to Discord
 
 on:
   workflow_dispatch:
@@ -19,4 +19,4 @@ jobs:
       - name: Run NewPlayersChart.ps1
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: pwsh ./NewPlayersChart.ps1 -Days 7
+        run: pwsh ./NewPlayersChart.ps1 -Slots 18
