@@ -1,10 +1,10 @@
-name: Send 7-Day Join Chart to Discord
+name: Send 7-Day New Players Chart to Discord
 
 on:
   workflow_dispatch:
 
 jobs:
-  send-join-chart:
+  send-newplayers-chart:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +16,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y imagemagick
 
-      - name: Run SendJoinChart.ps1
+      - name: Run NewPlayersChart.ps1
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: pwsh ./NewPlayersChart.ps1 -Days 7
