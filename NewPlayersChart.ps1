@@ -111,8 +111,8 @@ try {
     options = @{
       title = @{
         display = $true
-        text    = 'New Players (up to last 7 days)'
-        font    = @{ size = 20 }
+        text    = 'New Players — last 7 days'
+        font    = @{ size = 21 }
         fontColor   = 'red'
       }
       legend = @{ display = $false }
