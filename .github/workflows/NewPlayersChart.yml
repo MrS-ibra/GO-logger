@@ -1,4 +1,4 @@
-name: Send New Players Chart to Discord
+name: New Players Chart
 
 on:
   workflow_dispatch:
