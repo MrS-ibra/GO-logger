@@ -54,7 +54,7 @@ $chartConfig = @{
     options = @{
         title = @{
             display   = $true
-            text      = "Players Online — Last 24 Hours"
+            text      = "Online Players — Last 24 Hours"
             fontColor = 'red'
         }
         legend = @{ display = $false }  # hides the color box
