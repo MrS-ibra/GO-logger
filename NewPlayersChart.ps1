@@ -112,7 +112,8 @@ try {
       title = @{
         display = $true
         text    = 'New Players (up to 7 days)'
-        font    = @{ size = 18 }
+        font    = @{ size = 20 }
+        color   = 'red'
       }
       legend = @{ display = $false }
       scales = @{
