@@ -56,6 +56,7 @@ try {
             title = @{
                 display = $true
                 text    = "Players Online — Last 24 Hours"
+                fontColor   = 'red'
             }
             scales = @{
                 x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
