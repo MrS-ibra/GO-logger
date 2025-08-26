@@ -40,29 +40,29 @@ try {
     }
     $data   = $recentLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-    # QuickChart config
-    $chartConfig = @{
-        type = 'bar'
-        data = @{
-            labels   = $labels
-            datasets = @(@{
-                label       = 'Players Online'
-                data        = $data
-                borderColor = 'green'
-                fill        = $false
-            })
+# QuickChart config
+$chartConfig = @{
+    type = 'bar'
+    data = @{
+        labels   = $labels
+        datasets = @(@{
+            data        = $data
+            borderColor = 'green'
+            fill        = $false
+        })
+    }
+    options = @{
+        title = @{
+            display   = $true
+            text      = "Players Online — Last 24 Hours"
+            fontColor = 'red'
         }
-        options = @{
-            title = @{
-                display = $true
-                text    = "Players Online — Last 24 Hours"
-                fontColor   = 'red'
-            }
-            scales = @{
-                x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
-            }
+        legend = @{ display = $false }  # ← hides the color box
+        scales = @{
+            x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
         }
-    } | ConvertTo-Json -Depth 10 -Compress
+    }
+} | ConvertTo-Json -Depth 10 -Compress
 
     # Download chart PNG
     $encodedConfig = [uri]::EscapeDataString($chartConfig)
