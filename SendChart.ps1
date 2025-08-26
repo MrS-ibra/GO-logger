@@ -40,35 +40,38 @@ try {
     }
     $data   = $recentLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-# QuickChart config
-$chartConfig = @{
-    type = 'bar'
-    data = @{
-        labels   = $labels
-        datasets = @(@{
-            label       = 'Players Online'
-            data        = $data
-            fontColor   = 'white'
-            borderColor = 'green'
-            fill        = $false
-        })
-    }
-    options = @{
-        title = @{
-            display     = $true
-            text        = "Players Online — Last 24 Hours"
-            fontColor   = 'red'
+    # QuickChart config
+    $chartConfig = @{
+        type = 'bar'
+        data = @{
+            labels   = $labels
+            datasets = @(@{
+                label       = 'Players Online'
+                data        = $data
+                borderColor = 'green'
+                fill        = $false
+            })
         }
-        scales = @{
-            x = @{
-                ticks = @{
-                    maxRotation = 90
-                    minRotation = 90
-                }
+        options = @{
+            title = @{
+                display = $true
+                text    = "Players Online — Last 24 Hours"
+                fontColor   = 'red'
+            }
+            scales = @{
+                x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
             }
         }
+    } | ConvertTo-Json -Depth 10 -Compress
+
+    # Download chart PNG
+    $encodedConfig = [uri]::EscapeDataString($chartConfig)
+    $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
+    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
+
+    if (-not (Test-Path $ChartPath)) {
+        throw "Chart file was not created."
     }
-} | ConvertTo-Json -Depth 10 -Compress
 
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
