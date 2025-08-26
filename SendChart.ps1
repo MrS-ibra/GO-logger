@@ -40,30 +40,52 @@ try {
     }
     $data   = $recentLines | ForEach-Object { [int]($_.Split(',')[1]) }
 
-    # QuickChart config
-    $chartConfig = @{
-        type = 'bar'
-        data = @{
-            labels   = $labels
-            datasets = @(@{
-                label       = 'Players Online'
-                data        = $data
-                fontColor = 'white'
-                borderColor = 'green'
-                fill        = $false
-            })
+# QuickChart config
+$chartConfig = @{
+    type = 'bar'
+    data = @{
+        labels   = $labels
+        datasets = @(@{
+            label       = 'Players Online'
+            data        = $data
+            borderColor = 'green'
+            backgroundColor = 'rgba(0,0,0,0)'  # transparent fill
+            fill        = $false
+        })
+    }
+    options = @{
+        title = @{
+            display = $true
+            text    = "Players Online — Last 24 Hours"
+            font    = @{ size = 18 }
+            color   = 'red'  # Chart.js v3+ uses 'color' instead of 'fontColor'
         }
-        options = @{
-            title = @{
-                display = $true
-                text    = "Players Online — Last 24 Hours"
-                fontColor   = 'red'
+        scales = @{
+            x = @{
+                ticks = @{
+                    color        = 'white'  # axis label color
+                    maxRotation  = 90
+                    minRotation  = 90
+                }
+                grid = @{ display = $false }
             }
-            scales = @{
-                x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
+            y = @{
+                ticks = @{ color = 'white'; beginAtZero = $true }
+                grid  = @{ color = 'rgba(200,200,200,0.2)' }
             }
         }
-    } | ConvertTo-Json -Depth 10 -Compress
+        plugins = @{
+            datalabels = @{
+                color  = 'white'
+                anchor = 'end'
+                align  = 'end'
+                offset = -4
+                font   = @{ size = 12 }
+            }
+        }
+        layout = @{ padding = @{ top = 30; bottom = 10 } }
+    }
+} | ConvertTo-Json -Depth 10 -Compress
 
     # Download chart PNG
     $encodedConfig = [uri]::EscapeDataString($chartConfig)
