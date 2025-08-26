@@ -149,7 +149,7 @@ try {
     if (-not $magick) {
         throw "ImageMagick not found on PATH."
     }
-    & $magick $ChartPath $LogoPath -gravity northwest -geometry +10+10 -composite $ChartPath
+    & $magick $ChartPath $LogoPath -gravity northwest -geometry 260x260+10+10 -composite $ChartPath
 
     # 8. Send to Discord (embed only)
     $payload = @{
