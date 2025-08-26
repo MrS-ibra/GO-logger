@@ -1,11 +1,11 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-  Cumulative bar chart of new-player joins over the last up to 7 days,
-  split into 20 slots (default), with smart labels, data labels,
+  Cumulative bar chart of new player joins over the last up to 7 days,
+  split into 20 slots, with smart labels, data labels,
   ImageMagick logo overlay (top-left), and Discord webhook posting.
 .PARAMETER Slots
-  How many time buckets (bars) to draw; default is 20.
+  How many time buckets (bars) to draw
 #>
 param(
   [int]   $Slots      = 20,
@@ -30,7 +30,7 @@ function Get-OrdinalSuffix($n) {
 }
 
 try {
-  # 1. Load & sort your history entries
+  # 1. Load & sort history entries
   if (-not (Test-Path $StatsFile)) { throw "Stats file not found: $StatsFile" }
 
   $entries = Get-Content $StatsFile | ForEach-Object {
@@ -46,7 +46,7 @@ try {
 
   if ($entries.Count -eq 0) { throw "No valid log entries found." }
 
-  # 2. Define your up-to-7-day window
+  # 2. Define up-to-7-day window
   $latestTime   = $entries[-1].DateTime
   $earliestTime = $entries[0].DateTime
   $minStart     = $latestTime.AddDays(-7)
@@ -144,7 +144,7 @@ try {
   $chartUrl   = "https://quickchart.io/chart?c=$cfgEncoded&plugins=chartjs-plugin-datalabels"
   Invoke-WebRequest -Uri $chartUrl -OutFile $ChartFile -ErrorAction Stop
 
-  # 7. Overlay your logo (top-left) via ImageMagick
+  # 7. Overlay logo via ImageMagick
   Invoke-WebRequest -Uri $LogoUrl -OutFile $LogoFile -ErrorAction Stop
   $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
          ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
