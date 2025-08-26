@@ -48,8 +48,8 @@ $chartConfig = @{
         datasets = @(@{
             label       = 'Players Online'
             data        = $data
-            fontColor = 'white'
-            fill        = $true
+            fontColor   = 'white'
+            fill        = $false
         })
     }
     options = @{
