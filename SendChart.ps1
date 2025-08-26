@@ -48,6 +48,7 @@ try {
             datasets = @(@{
                 label       = 'Players Online'
                 data        = $data
+                fontColor = 'white'
                 borderColor = 'green'
                 fill        = $false
             })
