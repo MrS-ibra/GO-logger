@@ -16,4 +16,4 @@ jobs:
       - name: Send Chart
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: pwsh ./SendChart.ps1
+        run: pwsh ./OnlinePlayersChart.ps1
