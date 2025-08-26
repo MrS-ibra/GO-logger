@@ -113,7 +113,7 @@ try {
         display = $true
         text    = 'New Players (up to last 7 days)'
         font    = @{ size = 20 }
-        color   = 'red'
+        fontColor   = 'red'
       }
       legend = @{ display = $false }
       scales = @{
