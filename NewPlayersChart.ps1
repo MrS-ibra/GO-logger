@@ -16,6 +16,19 @@ param(
     [string]$WebhookUrl  = $env:DISCORD_WEBHOOK
 )
 
+# Helper: returns “st”, “nd”, “rd” or “th”
+function Get-OrdinalSuffix($n) {
+    switch ($n % 100) {
+        { $_ -in 11..13 } { return 'th' }
+    }
+    switch ($n % 10) {
+        1 { return 'st' }
+        2 { return 'nd' }
+        3 { return 'rd' }
+        default { return 'th' }
+    }
+}
+
 try {
     # 1. Load & sort history
     if (-not (Test-Path $StatsFile)) {
@@ -33,7 +46,7 @@ try {
         throw "No log entries found."
     }
 
-    # 2. Determine time window (cap at 7 days back)
+    # 2. Determine window (cap at 7 days back)
     $latestTime    = $entries[-1].DateTime
     $earliestTime  = $entries[0].DateTime
     $minStart      = $latestTime.AddDays(-7)
@@ -43,37 +56,44 @@ try {
     # 3. Compute slot duration
     $slotDuration = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
 
-    # 4. Build cumulative dataset + labels
+    # 4. Build cumulative data + labels
     $labels     = @()
     $data       = @()
     $cumulative = 0
 
     for ($i = 0; $i -lt $Slots; $i++) {
-        $bStart = $startTime + ($slotDuration * $i)
-        $bEnd   = $startTime + ($slotDuration * ($i + 1))
+        $bucketStart = $startTime + ($slotDuration * $i)
+        $bucketEnd   = $startTime + ($slotDuration * ($i + 1))
 
-        # Last log at or before bucket start
+        # last log ≤ bucket start
         $prevLog = $entries |
-            Where-Object { $_.DateTime -le $bStart } |
+            Where-Object { $_.DateTime -le $bucketStart } |
             Sort-Object DateTime -Descending |
             Select-Object -First 1
         if (-not $prevLog) { $prevLog = $entries[0] }
 
-        # Last log at or before bucket end
+        # last log ≤ bucket end
         $endLog = $entries |
-            Where-Object { $_.DateTime -le $bEnd } |
+            Where-Object { $_.DateTime -le $bucketEnd } |
             Sort-Object DateTime -Descending |
             Select-Object -First 1
 
-        # Compute joins and accumulate
+        # compute joins
         $joined = if ($endLog) { $endLog.Total - $prevLog.Total } else { 0 }
         if ($joined -gt 0) { $cumulative += $joined }
 
-        # Label formatting
+        # label formatting:
+        # multi-day: “Aug 25th, 8 PM”
+        # single-day: “8 PM”
         if ($totalDuration.TotalDays -gt 1) {
-            $labels += $bStart.ToString('MM-dd HH:mm')
+            $monthAbbrev = $bucketStart.ToString('MMM')     # “Aug”
+            $day         = $bucketStart.Day
+            $suffix      = Get-OrdinalSuffix $day           # “th”
+            $hour12      = $bucketStart.ToString('h')       # “8”
+            $ampm        = $bucketStart.ToString('tt')      # “PM”
+            $labels += "$monthAbbrev $day$suffix, $hour12 $ampm"
         } else {
-            $labels += $bStart.ToString('HH:mm')
+            $labels += $bucketStart.ToString('h tt')        # “8 PM”
         }
 
         $data += $cumulative
@@ -92,8 +112,8 @@ try {
         options = @{
             title = @{
                 display = $true
-                text    = 'New Players (up to last 7 days)'
-                font    = @{ size = 20 }
+                text    = 'New Players (up to 7 days)'
+                font    = @{ size = 18 }
             }
             legend = @{ display = $false }
             scales = @{
@@ -120,28 +140,22 @@ try {
     } | ConvertTo-Json -Depth 6 -Compress
 
     # 6. Download chart PNG
-    $encConfig = [uri]::EscapeDataString($chartConfig)
-    $chartUrl  = "https://quickchart.io/chart?c=$encConfig&plugins=chartjs-plugin-datalabels"
-    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
+    $encoded = [uri]::EscapeDataString($chartConfig)
+    $url     = "https://quickchart.io/chart?c=$encoded&plugins=chartjs-plugin-datalabels"
+    Invoke-WebRequest -Uri $url -OutFile $ChartPath -ErrorAction Stop
 
-    # 7. Download logo and overlay via ImageMagick
+    # 7. Overlay logo via ImageMagick (top-left)
     Invoke-WebRequest -Uri $LogoUrl -OutFile $LogoPath -ErrorAction Stop
-
     $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
            ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
     if (-not $magick) {
         throw "ImageMagick not found on PATH."
     }
+    & $magick $ChartPath $LogoPath -gravity northwest -geometry +10+10 -composite $ChartPath
 
-    # overlay GO logo top-left
-    & $magick $ChartPath $LogoPath -gravity northwest -geometry 260x260+10+10 -composite $ChartPath
-
-    # 8. Send to Discord
-    $payload = @{
-        embeds = @(@{ image = @{ url = 'attachment://'+(Split-Path $ChartPath -Leaf) } })
-    }
+    # 8. Send to Discord (embed only)
+    $payload = @{ embeds = @(@{ image = @{ url = 'attachment://'+(Split-Path $ChartPath -Leaf) } }) }
     $payloadJson = $payload | ConvertTo-Json -Depth 5
-
     Invoke-RestMethod -Uri $WebhookUrl `
         -Method Post `
         -ContentType 'multipart/form-data' `
