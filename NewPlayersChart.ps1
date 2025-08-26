@@ -1,133 +1,136 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-  Cumulative bar chart of new-player joins over the last available logs
-  (up to 7 days back), split into a minimum of 20 slots, shows data labels,
-  overlays your Imgur logo via Chart.js watermark plugin, and posts to Discord.
+  Generates a cumulative bar chart of new-player joins over the last available logs
+  (up to 7 days back), split into a minimum of 20 slots, overlays your logo via
+  ImageMagick, and sends the final PNG to Discord.
 .PARAMETER Slots
-  Number of bars to show; default is 20.
+  Number of bars to display (default 20).
 #>
 param(
     [int]   $Slots       = 20,
-    [string]$HistoryFile = 'StatsHistory.txt',
-    [string]$ChartFile   = 'NewPlayersChart.png',
+    [string]$StatsFile   = 'StatsHistory.txt',
+    [string]$ChartPath   = 'NewPlayersChart.png',
     [string]$LogoUrl     = 'https://i.imgur.com/Zdufcwx.jpeg',
+    [string]$LogoPath    = 'logo.png',
     [string]$WebhookUrl  = $env:DISCORD_WEBHOOK
 )
 
-# 1. Load & sort history
-if (-not (Test-Path $HistoryFile)) { throw "StatsHistory.txt not found" }
-$entries = Get-Content $HistoryFile | ForEach-Object {
-    $p = $_ -split ','
-    [PSCustomObject]@{
-        DateTime = [DateTime]::ParseExact($p[0], 'yyyy-MM-dd HH:mm', $null)
-        Total    = [int]$p[2]
+try {
+    # 1. Read and sort history
+    if (-not (Test-Path $StatsFile)) { throw "Stats file not found: $StatsFile" }
+    $entries = Get-Content $StatsFile | ForEach-Object {
+        $p = $_ -split ','
+        [PSCustomObject]@{
+            DateTime = [DateTime]::ParseExact($p[0],'yyyy-MM-dd HH:mm',$null)
+            Total    = [int]$p[2]
+        }
+    } | Sort-Object DateTime
+
+    if ($entries.Count -eq 0) { throw "No log entries found." }
+
+    # 2. Define time window (cap 7 days)
+    $latestTime    = $entries[-1].DateTime
+    $earliestTime  = $entries[0].DateTime
+    $minStart      = $latestTime.AddDays(-7)
+    $startTime     = if ($earliestTime -lt $minStart) { $minStart } else { $earliestTime }
+    $totalDuration = $latestTime - $startTime
+
+    # 3. Calculate slot span
+    $slotSpan = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
+
+    # 4. Build cumulative dataset + labels
+    $labels     = @(); $data = @(); $cum = 0
+    for ($i = 0; $i -lt $Slots; $i++) {
+        $bStart = $startTime + ($slotSpan * $i)
+        $bEnd   = $startTime + ($slotSpan * ($i + 1))
+
+        # find last log ≤ bucket start
+        $prev = $entries | Where-Object DateTime -le $bStart |
+                Sort DateTime -Descending | Select-Object -First 1
+        if (-not $prev) { $prev = $entries[0] }
+
+        # find last log ≤ bucket end
+        $endLog = $entries | Where-Object DateTime -le $bEnd |
+                  Sort DateTime -Descending | Select-Object -First 1
+
+        $joined = if ($endLog) { $endLog.Total - $prev.Total } else { 0 }
+        if ($joined -gt 0) { $cum += $joined }
+
+        # smart label: multi-day = date+time, single-day = time only
+        if ($totalDuration.TotalDays -gt 1) {
+            $labels += $bStart.ToString('MM-dd HH:mm')
+        } else {
+            $labels += $bStart.ToString('HH:mm')
+        }
+
+        $data += $cum
     }
-} | Sort-Object DateTime
-if ($entries.Count -eq 0) { throw "No log entries found." }
 
-# 2. Determine window (cap at 7 days)
-$latest        = $entries[-1].DateTime
-$earliest      = $entries[0].DateTime
-$minAllowed    = $latest.AddDays(-7)
-$startTime     = if ($earliest -lt $minAllowed) { $minAllowed } else { $earliest }
-$totalDuration = $latest - $startTime
+    # 5. Chart.js config with datalabels and title
+    $cfg = @{
+        type = 'bar'
+        data = @{
+            labels   = $labels
+            datasets = @(@{
+                data            = $data
+                backgroundColor = 'rgba(54,162,235,0.7)'
+            })
+        }
+        options = @{
+            title = @{
+                display = $true
+                text    = 'New Players (up to 7 days)'
+                font    = @{ size = 18 }
+            }
+            legend = @{ display = $false }
+            scales = @{
+                xAxes = @(@{
+                    ticks     = @{ autoSkip = $false; maxRotation = 45; minRotation = 45 }
+                    gridLines = @{ display = $false }
+                })
+                yAxes = @(@{
+                    ticks     = @{ beginAtZero = $true }
+                    gridLines = @{ color = 'rgba(200,200,200,0.2)' }
+                })
+            }
+            plugins = @{
+                datalabels = @{
+                    color     = 'white'
+                    anchor    = 'end'
+                    align     = 'end'
+                    offset    = -4
+                    font      = @{ size = 12 }
+                }
+            }
+            layout = @{ padding = @{ top = 30; bottom = 10 } }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress
 
-# 3. Slot duration
-$slotDuration = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
+    # 6. Download QuickChart PNG
+    $encUrl   = [uri]::EscapeDataString($cfg)
+    $chartUrl = "https://quickchart.io/chart?c=$encUrl"
+    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
 
-# 4. Build cumulative data + labels
-$labels     = @(); $data = @(); $cumulative = 0
+    # 7. Download logo and overlay with ImageMagick
+    Invoke-WebRequest -Uri $LogoUrl -OutFile $LogoPath -ErrorAction Stop
+    $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
+           ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
+    if (-not $magick) { throw "ImageMagick not found." }
+    & $magick $ChartPath $LogoPath -gravity northeast -geometry +10+10 -composite $ChartPath
 
-for ($i = 0; $i -lt $Slots; $i++) {
-    $bStart = $startTime + ($slotDuration * $i)
-    $bEnd   = $startTime + ($slotDuration * ($i + 1))
+    # 8. Post to Discord
+    $payload = @{ embeds = @(@{ image = @{ url = 'attachment://'+(Split-Path $ChartPath -Leaf) } }) }
+    $pj = $payload | ConvertTo-Json -Depth 5
+    Invoke-RestMethod -Uri $WebhookUrl `
+      -Method Post `
+      -ContentType 'multipart/form-data' `
+      -Form @{ payload_json = $pj; file1 = Get-Item $ChartPath }
 
-    $prevLog = $entries |
-        Where-Object { $_.DateTime -le $bStart } |
-        Sort-Object DateTime -Descending |
-        Select-Object -First 1
-    if (-not $prevLog) { $prevLog = $entries[0] }
+    Write-Host "✅ Chart posted (cumulative=$cum)."
+    exit 0
 
-    $endLog = $entries |
-        Where-Object { $_.DateTime -le $bEnd } |
-        Sort-Object DateTime -Descending |
-        Select-Object -First 1
-
-    $joined = if ($endLog) { $endLog.Total - $prevLog.Total } else { 0 }
-    if ($joined -gt 0) { $cumulative += $joined }
-
-    if ($totalDuration.TotalDays -gt 1) {
-        $labels += $bStart.ToString('MM-dd HH:mm')
-    } else {
-        $labels += $bStart.ToString('HH:mm')
-    }
-
-    $data += $cumulative
+} catch {
+    Write-Error "❌ Failed: $($_.Exception.Message)"
+    exit 1
 }
-
-# 5. Build QuickChart JSON with title, datalabels & watermark plugin
-$chartConfig = @{
-    type = 'bar'
-    data = @{
-        labels   = $labels
-        datasets = @(@{
-            data            = $data
-            backgroundColor = 'rgba(54,162,235,0.7)'
-        })
-    }
-    options = @{
-        title = @{
-            display = $true
-            text    = 'New Players (up to 7 days)'
-            font    = @{ size = 18 }
-        }
-        legend = @{ display = $false }
-        scales = @{
-            xAxes = @(@{
-                ticks     = @{ autoSkip = $false; maxRotation = 45; minRotation = 45 }
-                gridLines = @{ display = $false }
-            })
-            yAxes = @(@{
-                ticks     = @{ beginAtZero = $true }
-                gridLines = @{ color = 'rgba(200,200,200,0.2)' }
-            })
-        }
-        plugins = @{
-            datalabels = @{
-                color     = 'white'
-                anchor    = 'end'
-                align     = 'start'
-                formatter = 'function(v){return v;}'
-                font      = @{ size = 12 }
-            }
-            watermark = @{
-                image    = $LogoUrl
-                position = 'topRight'
-                width    = 40
-                opacity  = 1.0
-            }
-        }
-        layout = @{ padding = @{ top = 30; bottom = 10 } }
-    }
-} | ConvertTo-Json -Depth 6
-
-# 6. Render chart
-$enc   = [uri]::EscapeDataString($chartConfig)
-$plugs = 'chartjs-plugin-datalabels,chartjs-plugin-watermark'
-$uri   = "https://quickchart.io/chart?c=$enc&plugins=$plugs"
-Invoke-WebRequest -Uri $uri -OutFile $ChartFile -ErrorAction Stop
-
-# 7. Post to Discord (embed only)
-$payload = @{ embeds = @(@{ image = @{ url = 'attachment://NewPlayersChart.png' } }) }
-$payloadJson = $payload | ConvertTo-Json -Depth 5
-
-Invoke-RestMethod -Uri $WebhookUrl `
-    -Method Post `
-    -ContentType 'multipart/form-data' `
-    -Form @{
-        payload_json = $payloadJson
-        file1        = Get-Item $ChartFile
-    }
-
-Write-Host "✅ Chart posted with logo opacity 1.0 and default dimensions."
