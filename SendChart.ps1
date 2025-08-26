@@ -48,53 +48,26 @@ $chartConfig = @{
         datasets = @(@{
             label       = 'Players Online'
             data        = $data
-            borderColor = 'green'
-            backgroundColor = 'rgba(0,0,0,0)'  # transparent fill
-            fill        = $false
+            fontColor = 'white'
+            fill        = $true
         })
     }
     options = @{
         title = @{
-            display = $true
-            text    = "Players Online — Last 24 Hours"
-            font    = @{ size = 18 }
-            color   = 'red'  # Chart.js v3+ uses 'color' instead of 'fontColor'
+            display     = $true
+            text        = "Players Online — Last 24 Hours"
+            fontColor   = 'red'
         }
         scales = @{
             x = @{
                 ticks = @{
-                    color        = 'white'  # axis label color
-                    maxRotation  = 90
-                    minRotation  = 90
+                    maxRotation = 90
+                    minRotation = 90
                 }
-                grid = @{ display = $false }
-            }
-            y = @{
-                ticks = @{ color = 'white'; beginAtZero = $true }
-                grid  = @{ color = 'rgba(200,200,200,0.2)' }
             }
         }
-        plugins = @{
-            datalabels = @{
-                color  = 'white'
-                anchor = 'end'
-                align  = 'end'
-                offset = -4
-                font   = @{ size = 12 }
-            }
-        }
-        layout = @{ padding = @{ top = 30; bottom = 10 } }
     }
 } | ConvertTo-Json -Depth 10 -Compress
-
-    # Download chart PNG
-    $encodedConfig = [uri]::EscapeDataString($chartConfig)
-    $chartUrl = "https://quickchart.io/chart?c=$encodedConfig"
-    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
-
-    if (-not (Test-Path $ChartPath)) {
-        throw "Chart file was not created."
-    }
 
     # Download logo
     Invoke-WebRequest -Uri "https://i.imgur.com/Zdufcwx.jpeg" -OutFile $LogoPath -ErrorAction Stop
