@@ -1,4 +1,4 @@
-name: Send Chart to Discord
+name: Online Players Chart
 
 on:
   workflow_dispatch:
