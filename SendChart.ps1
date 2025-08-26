@@ -85,8 +85,12 @@ $chartConfig = @{
         throw "ImageMagick not found on this system."
     }
 
-    # Overlay logo on chart
-    & $magickPath $ChartPath $LogoPath -gravity northwest -geometry 260x260+10+10 -composite $ChartPath
+  # 7. Overlay your logo (top-left) via ImageMagick
+  Invoke-WebRequest -Uri $LogoUrl -OutFile $LogoFile -ErrorAction Stop
+  $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
+         ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
+  if (-not $magick) { throw "ImageMagick not found on PATH." }
+  & $magick $ChartFile $LogoFile -gravity northwest -geometry 260x260+10+10 -composite $ChartFile
 
     # Send to Discord
     Invoke-RestMethod -Uri $WebhookUrl -Method Post -Form @{
