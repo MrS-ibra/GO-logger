@@ -149,7 +149,7 @@ try {
   $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
          ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
   if (-not $magick) { throw "ImageMagick not found on PATH." }
-  & $magick $ChartFile $LogoFile -gravity northwest -geometry 260x260+10+10 -composite $ChartFile
+  & $magick $ChartFile $LogoFile -gravity north -geometry 260x260+10+10 -composite $ChartFile
 
   # 8. Send to Discord
   $payload = @{ embeds = @(@{ image = @{ url = "attachment://$ChartFile" } }) }
