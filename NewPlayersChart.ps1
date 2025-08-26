@@ -3,7 +3,7 @@
 .SYNOPSIS
   Builds a cumulative bar chart of new-player joins over the last available logs
   (up to 7 days back), split into a minimum of 20 slots, shows data labels,
-  overlays your Imgur logo via ImageMagick, and posts the final PNG to Discord.
+  overlays your Imgur logo via ImageMagick in the top-left, and posts to Discord.
 .PARAMETER Slots
   Number of bars to display; default is 20.
 #>
@@ -16,16 +16,29 @@ param(
     [string]$WebhookUrl  = $env:DISCORD_WEBHOOK
 )
 
+# Helper function: returns “st”, “nd”, “rd” or “th”
+function Get-OrdinalSuffix($n) {
+    switch ($n % 100) {
+        { $_ -in 11..13 } { return 'th' }
+    }
+    switch ($n % 10) {
+        1 { return 'st' }
+        2 { return 'nd' }
+        3 { return 'rd' }
+        default { return 'th' }
+    }
+}
+
 try {
     # 1. Load & sort history
     if (-not (Test-Path $StatsFile)) {
         throw "Stats file not found: $StatsFile"
     }
     $entries = Get-Content $StatsFile | ForEach-Object {
-        $p = $_ -split ','
+        $parts = $_ -split ','
         [PSCustomObject]@{
-            DateTime = [DateTime]::ParseExact($p[0], 'yyyy-MM-dd HH:mm', $null)
-            Total    = [int]$p[2]
+            DateTime = [DateTime]::ParseExact($parts[0], 'yyyy-MM-dd HH:mm', $null)
+            Total    = [int]$parts[2]
         }
     } | Sort-Object DateTime
 
@@ -33,53 +46,58 @@ try {
         throw "No log entries found."
     }
 
-    # 2. Determine time window (cap at 7 days back)
+    # 2. Determine the 7-day window
     $latestTime    = $entries[-1].DateTime
     $earliestTime  = $entries[0].DateTime
     $minStart      = $latestTime.AddDays(-7)
     $startTime     = if ($earliestTime -lt $minStart) { $minStart } else { $earliestTime }
     $totalDuration = $latestTime - $startTime
 
-    # 3. Compute slot duration
-    $slotDuration = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
+    # 3. Compute each slot’s span
+    $slotSpan = [TimeSpan]::FromTicks($totalDuration.Ticks / $Slots)
 
-    # 4. Build cumulative dataset + labels
+    # 4. Build cumulative data series + labels
     $labels     = @()
     $data       = @()
     $cumulative = 0
 
     for ($i = 0; $i -lt $Slots; $i++) {
-        $bStart = $startTime + ($slotDuration * $i)
-        $bEnd   = $startTime + ($slotDuration * ($i + 1))
+        $bucketStart = $startTime + ($slotSpan * $i)
+        $bucketEnd   = $startTime + ($slotSpan * ($i + 1))
 
-        # Last log at or before bucket start
+        # last log ≤ bucket start
         $prevLog = $entries |
-            Where-Object { $_.DateTime -le $bStart } |
+            Where-Object { $_.DateTime -le $bucketStart } |
             Sort-Object DateTime -Descending |
             Select-Object -First 1
         if (-not $prevLog) { $prevLog = $entries[0] }
 
-        # Last log at or before bucket end
+        # last log ≤ bucket end
         $endLog = $entries |
-            Where-Object { $_.DateTime -le $bEnd } |
+            Where-Object { $_.DateTime -le $bucketEnd } |
             Sort-Object DateTime -Descending |
             Select-Object -First 1
 
-        # Compute joins and accumulate
+        # compute joins
         $joined = if ($endLog) { $endLog.Total - $prevLog.Total } else { 0 }
         if ($joined -gt 0) { $cumulative += $joined }
 
-        # Label formatting
+        # label formatting:
+        # - multi-day: “MonthName DayOrdinal” (e.g. “August 25th”)
+        # - single-day: “HHH” (e.g. “14H”, “03H”)
         if ($totalDuration.TotalDays -gt 1) {
-            $labels += $bStart.ToString('MM-dd HH:mm')
+            $month  = $bucketStart.ToString('MMMM')
+            $day    = $bucketStart.Day
+            $suffix = Get-OrdinalSuffix $day
+            $labels += "$month $day$suffix"
         } else {
-            $labels += $bStart.ToString('HH:mm')
+            $labels += $bucketStart.ToString('HH') + 'H'
         }
 
         $data += $cumulative
     }
 
-    # 5. QuickChart JSON (bar + datalabels + title)
+    # 5. QuickChart JSON (title + datalabels)
     $chartConfig = @{
         type = 'bar'
         data = @{
@@ -119,28 +137,25 @@ try {
         }
     } | ConvertTo-Json -Depth 6 -Compress
 
-    # 6. Download chart PNG (with datalabels)
-    $encConfig = [uri]::EscapeDataString($chartConfig)
-    $chartUrl  = "https://quickchart.io/chart?c=$encConfig&plugins=chartjs-plugin-datalabels"
-    Invoke-WebRequest -Uri $chartUrl -OutFile $ChartPath -ErrorAction Stop
+    # 6. Fetch chart PNG (with datalabels)
+    $encoded = [uri]::EscapeDataString($chartConfig)
+    $url     = "https://quickchart.io/chart?c=$encoded&plugins=chartjs-plugin-datalabels"
+    Invoke-WebRequest -Uri $url -OutFile $ChartPath -ErrorAction Stop
 
-    # 7. Download logo and overlay via ImageMagick
+    # 7. Download logo & overlay via ImageMagick (top-left)
     Invoke-WebRequest -Uri $LogoUrl -OutFile $LogoPath -ErrorAction Stop
-
     $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
            ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
     if (-not $magick) {
         throw "ImageMagick not found on PATH."
     }
-
-    & $magick $ChartPath $LogoPath -gravity northeast -geometry 260x260+10+10 -composite $ChartPath
+    & $magick $ChartPath $LogoPath -gravity northwest -geometry +10+10 -composite $ChartPath
 
     # 8. Send to Discord (embed only)
     $payload = @{
-        embeds = @(@{ image = @{ url = 'attachment://'+(Split-Path $ChartPath -Leaf) } })
+        embeds = @(@{ image = @{ url = 'attachment://' + (Split-Path $ChartPath -Leaf) } })
     }
     $payloadJson = $payload | ConvertTo-Json -Depth 5
-
     Invoke-RestMethod -Uri $WebhookUrl `
         -Method Post `
         -ContentType 'multipart/form-data' `
@@ -149,7 +164,7 @@ try {
             file1        = Get-Item $ChartPath
         }
 
-    Write-Host "✅ Chart posted successfully (cumulative = $cumulative)."
+    Write-Host "✅ Chart posted; cumulative max = $cumulative."
     exit 0
 
 } catch {
