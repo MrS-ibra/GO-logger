@@ -74,16 +74,16 @@ try {
         'Kill toll^'   = '🚨 Kill toll is online, watch out for the big KT!'
         '-DoMiNaToR-'  = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
         'OldAnalytics' = '🚨 OldAnalytics is online, ready to solve your problems!'
-        'x64_dev'    = '🚨 Daniels is online. he wants some testers .'
+        'x64_dev'    = '🚨 Daniels is online. he wants some testing .'
     }
 
     # Priority order when there are 2 or more VIP players online (first in list = highest priority)
     $vipPriority = @(
         '-DoMiNaToR-',
+        'x64_dev',
         'Kill toll^',
         'OldAnalytics',
-        'Mr Stratos',
-        'x64_dev'
+        'Mr Stratos'
     )
 
     # Extract player names from HTML
