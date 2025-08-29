@@ -80,7 +80,7 @@ $chartConfig = @{
     }
 
     # Download logo
-    Invoke-WebRequest -Uri "https://i.imgur.com/fqJNvOb.png" -OutFile $LogoPath -ErrorAction Stop
+    Invoke-WebRequest -Uri "https://i.imgur.com/Zo9RY7b.png" -OutFile $LogoPath -ErrorAction Stop
 
     # Detect ImageMagick binary
     $magickPath = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
