@@ -2,8 +2,8 @@ name: Cleanup Workflow Runs
 
 on:
   schedule:
-    - cron: '0 0 */2 * *'  # Every 2 days at midnight UTC
-  workflow_dispatch:       # Optional: allows manual trigger
+    - cron: '0 0 */1 * *'
+  workflow_dispatch:       
 
 jobs:
   cleanup:
