@@ -11,7 +11,7 @@ param(
   [int]   $Slots      = 20,
   [string]$StatsFile  = 'StatsHistory.txt',
   [string]$ChartFile  = 'NewPlayersChart.png',
-  [string]$LogoUrl    = 'https://i.imgur.com/Zdufcwx.jpeg',
+  [string]$LogoUrl    = 'https://i.imgur.com/Zo9RY7b.png',
   [string]$LogoFile   = 'logo.png',
   [string]$WebhookUrl = $env:DISCORD_WEBHOOK
 )
