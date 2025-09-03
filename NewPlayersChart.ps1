@@ -69,15 +69,15 @@ try {
     $data += $cumulative
   }
 
-  $chartSpec = @{
+$chartConfig = @{
     type = 'bar'
     data = @{
-      labels   = $labels
-      datasets = @(@{
-        data            = $data
-        borderColor = 'green'
-        fill        = $false
-      })
+        labels   = $labels
+        datasets = @(@{
+            data        = $data
+            borderColor = 'green'
+            fill        = $false
+        })
     }
     options = @{
         title = @{
