@@ -69,34 +69,47 @@ try {
     $data += $cumulative
   }
 
-$chartConfig = @{
+  $chartSpec = @{
     type = 'bar'
     data = @{
-        labels   = $labels
-        datasets = @(@{
-            data        = $data
-            borderColor = 'green'
-            fill        = $false
-        })
+      labels   = $labels
+      datasets = @(@{
+        data            = $data
+        backgroundColor = 'rgba(54,162,235,0.7)'  # transparent blue
+        borderColor     = 'rgba(54,162,235,1)'    # solid border
+        borderWidth     = 1
+      })
     }
     options = @{
-        title = @{
-            display   = $true
-            text      = "Online Players — Last 24 Hours"
-            fontColor = 'red'
+      title = @{
+        display   = $true
+        text      = 'New Players — last 7 days'
+        font      = @{ size = 21 }
+        fontColor = 'red'
+      }
+      legend = @{ display = $false }
+      scales = @{
+        xAxes = @(@{
+          ticks     = @{ autoSkip = $false; maxRotation = 45; minRotation = 45 }
+          gridLines = @{ display = $false }
+        })
+        yAxes = @(@{
+          ticks     = @{ beginAtZero = $true }
+          gridLines = @{ color = 'rgba(200,200,200,0.2)' }
+        })
+      }
+      plugins = @{
+        datalabels = @{
+          color  = 'white'
+          anchor = 'end'
+          align  = 'end'
+          offset = -4
+          font   = @{ size = 12 }
         }
-        legend = @{ display = $false }  # hides the color box
-        scales = @{
-            x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } }
-        }
-        layout = @{                      
-            padding = @{
-                top  = 40
-                left = 10
-            }
-        }
+      }
+      layout = @{ padding = @{ top = 30; bottom = 10 } }
     }
-} | ConvertTo-Json -Depth 10 -Compress
+  } | ConvertTo-Json -Depth 6
 
   $cfgEncoded = [uri]::EscapeDataString($chartSpec)
   $chartUrl   = "https://quickchart.io/chart?c=$cfgEncoded&plugins=chartjs-plugin-datalabels"
