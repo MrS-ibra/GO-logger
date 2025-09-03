@@ -1,6 +1,12 @@
 #!/usr/bin/env pwsh
-# Generates a cumulative bar chart of new players over last 7 days with transparency, overlays logo, posts to Discord
-
+<#
+.SYNOPSIS
+  Cumulative bar chart of new player joins over the last up to 7 days,
+  split into 20 slots, with smart labels, data labels,
+  ImageMagick logo overlay (top-left), and Discord webhook posting.
+.PARAMETER Slots
+  How many time buckets (bars) to draw
+#>
 param(
   [int]   $Slots      = 20,
   [string]$StatsFile  = 'StatsHistory.txt',
@@ -11,7 +17,9 @@ param(
 )
 
 function Get-OrdinalSuffix($n) {
-  switch ($n % 100) { { $_ -in 11..13 } { return 'th' } }
+  switch ($n % 100) {
+    { $_ -in 11..13 } { return 'th' }
+  }
   switch ($n % 10) {
     1 { 'st'; break }
     2 { 'nd'; break }
@@ -28,7 +36,9 @@ try {
     try {
       $dt    = [DateTime]$parts[0]
       $total = [int]$parts[2]
-    } catch { return }
+    } catch {
+      return
+    }
     [PSCustomObject]@{ DateTime = $dt; Total = $total }
   } | Sort-Object DateTime
 
@@ -49,18 +59,25 @@ try {
     $bStart = $startTime + ($slotDuration * $i)
     $bEnd   = $startTime + ($slotDuration * ($i + 1))
 
-    $prev = $entries | Where-Object { $_.DateTime -le $bStart } | Sort-Object DateTime -Descending | Select-Object -First 1
+    $prev = $entries |
+      Where-Object { $_.DateTime -le $bStart } |
+      Sort-Object DateTime -Descending |
+      Select-Object -First 1
     if (-not $prev) { $prev = $entries[0] }
 
-    $endLog = $entries | Where-Object { $_.DateTime -le $bEnd } | Sort-Object DateTime -Descending | Select-Object -First 1
+    $endLog = $entries |
+      Where-Object { $_.DateTime -le $bEnd } |
+      Sort-Object DateTime -Descending |
+      Select-Object -First 1
+
     $joined = if ($endLog) { $endLog.Total - $prev.Total } else { 0 }
     if ($joined -gt 0) { $cumulative += $joined }
 
     if ($windowSpan.TotalDays -gt 1) {
-      $mon    = $bStart.ToString('MMM')
-      $day    = $bStart.Day
-      $suffix = Get-OrdinalSuffix $day
-      $time   = $bStart.ToString('h tt')
+      $mon   = $bStart.ToString('MMM')
+      $day   = $bStart.Day
+      $suffix= Get-OrdinalSuffix $day
+      $time  = $bStart.ToString('h tt')
       $labels += "$mon $day$suffix, $time"
     } else {
       $labels += $bStart.ToString('h tt')
@@ -84,7 +101,7 @@ try {
       title = @{
         display   = $true
         text      = 'New Players — last 7 days'
-        font      = @{ size = 21 }
+        font      = @{ size = 21; family = 'Arial'; weight = 'bold' }
         fontColor = 'red'
       }
       legend = @{ display = $false }
@@ -112,14 +129,13 @@ try {
   } | ConvertTo-Json -Depth 6
 
   $cfgEncoded = [uri]::EscapeDataString($chartSpec)
-  $chartUrl   = "https://quickchart.io/chart?c=$cfgEncoded&plugins=chartjs-plugin-datalabels"
+  $chartUrl   = "https://quickchart.io/chart?c=$cfgEncoded&plugins=chartjs-plugin-datalabels&width=1600&height=900"
   Invoke-WebRequest -Uri $chartUrl -OutFile $ChartFile -ErrorAction Stop
 
   Invoke-WebRequest -Uri $LogoUrl -OutFile $LogoFile -ErrorAction Stop
   $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
          ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
   if (-not $magick) { throw "ImageMagick not found on PATH." }
-
   & $magick $ChartFile $LogoFile -gravity north -geometry 260x260+10+10 -composite $ChartFile
 
   $payload = @{ embeds = @(@{ image = @{ url = "attachment://$ChartFile" } }) }
@@ -132,7 +148,7 @@ try {
       file1        = Get-Item $ChartFile
     }
 
-  Write-Host "✅ Posted transparent chart (cumulative max = $cumulative)."
+  Write-Host "✅ Posted high-quality transparent chart (cumulative max = $cumulative)."
 }
 catch {
   Write-Error "❌ Failed: $($_.Exception.Message)"
