@@ -70,20 +70,14 @@ try {
 
     # --- VIP detection with custom messages ---
     $vipMessages = @{
-        'Mr Stratos'   = '🚨 Ibra is online, join his halal lounge!'
         'Kill toll^'   = '🚨 Kill toll is online, watch out for the big KT!'
-        '-DoMiNaToR-'  = '🚨 Domi is online/Live — expect big plays, and maybe some questionable maps!'
-        'OldAnalytics' = '🚨 OldAnalytics is online, ready to solve your problems!'
-        'x64_dev'    = '🚨 Daniels is online. he wants some testing .'
+        '-DoMiNaToR-'  = '🚨 Domi is online — expect big plays, and maybe some questionable maps.'
     }
 
     # Priority order when there are 2 or more VIP players online (first in list = highest priority)
     $vipPriority = @(
         '-DoMiNaToR-',
-        'x64_dev',
-        'Kill toll^',
-        'OldAnalytics',
-        'Mr Stratos'
+        'Kill toll^'
     )
 
     # Extract player names from HTML
