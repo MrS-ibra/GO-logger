@@ -1,0 +1,29 @@
+name: Peak Chart
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: 🔍 Check and Install ImageMagick if Missing
+      shell: pwsh
+      run: |
+        if (-not (Get-Command magick -ErrorAction SilentlyContinue)) {
+          Write-Host "🛠 ImageMagick not found. Installing via Chocolatey..."
+          choco install imagemagick -y
+        } else {
+          Write-Host "✅ ImageMagick already installed. Skipping install."
+        }
+
+    - name: 📊 Run Peak Chart Script
+      shell: pwsh
+      run: ./PeakOnlineChart.ps1
