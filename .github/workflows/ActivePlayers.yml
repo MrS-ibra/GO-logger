@@ -1,0 +1,54 @@
+name: Track Active Players
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-tracker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Track & Archive Players
+        shell: pwsh
+        env:
+          GIT_USER:   IbraBot
+          GIT_EMAIL:  ibra@example.com
+        run: |
+          git config user.name  $env:GIT_USER
+          git config user.email $env:GIT_EMAIL
+
+          $log = 'ActivePlayers.txt'
+          $arc = 'archive'
+
+          if (-not (Test-Path $log)) {
+            New-Item $log -ItemType File | Out-Null
+          }
+
+          if ((Get-Date).Day -eq 1) {
+            $prev = (Get-Date).AddMonths(-1)
+            $dir  = "$arc/$($prev.ToString('yyyy-MM'))"
+            if (-not (Test-Path $dir)) {
+              New-Item $dir -ItemType Directory | Out-Null
+            }
+            Move-Item $log "$dir/ActivePlayers-$($prev.ToString('yyyy-MM-dd')).txt" -Force
+            New-Item $log -ItemType File | Out-Null
+          }
+
+          $html = (Invoke-WebRequest 'https://www.playgenerals.online/players').Content
+          [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
+            ForEach-Object {
+              $name = $_.Groups[1].Value.Trim()
+              if (-not (Select-String -Path $log -Pattern $name -Quiet)) {
+                Add-Content $log $name
+              }
+            }
+
+          git add $log
+          if (Test-Path $arc) { git add $arc }
+          git commit -m "Update active players + archive if needed" || echo "No changes"
+          git push || echo "Push skipped"
