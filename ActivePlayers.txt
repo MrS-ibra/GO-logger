@@ -199,3 +199,5 @@ x64_dev
 Menntaron
 Sib
 Andrej^
+E = mc2
+move
