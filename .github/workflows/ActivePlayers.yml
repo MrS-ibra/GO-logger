@@ -1,15 +1,13 @@
 name: Track Active Players
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
-  run-tracker:
+  run:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -19,45 +17,27 @@ jobs:
           GIT_USER:  IbraBot
           GIT_EMAIL: ibra@example.com
         run: |
-          # configure git identity
-          git config user.name  $env:GIT_USER
-          git config user.email $env:GIT_EMAIL
+          git config user.name  $env:GIT_USER; git config user.email $env:GIT_EMAIL
 
-          $log = 'ActivePlayers.txt'
-          $arc = 'archive'
+          $log='ActivePlayers.txt'; $arc='archive'
+          if(-not(Test-Path $log)){ New-Item -Path $log -ItemType File >$null }
 
-          # ensure the log exists
-          if (-not (Test-Path $log)) {
-            New-Item $log -ItemType File | Out-Null
+          if((Get-Date).Day -eq 1){
+            $p=(Get-Date).AddMonths(-1)
+            New-Item -ItemType Directory -Path "$arc/$($p.ToString('yyyy-MM'))" -Force >$null
+            Move-Item $log "$arc/$($p.ToString('yyyy-MM'))/ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
+            New-Item -Path $log -ItemType File -Force >$null
           }
 
-          # on the 1st, archive last month
-          if ((Get-Date).Day -eq 1) {
-            $prev = (Get-Date).AddMonths(-1)
-            $dir  = "$arc/$($prev.ToString('yyyy-MM'))"
-            if (-not (Test-Path $dir)) {
-              New-Item $dir -ItemType Directory | Out-Null
-            }
-            Move-Item -Path $log `
-                      -Destination "$dir/ActivePlayers-$($prev.ToString('yyyy-MM-dd')).txt" `
-                      -Force
-            New-Item $log -ItemType File | Out-Null
-          }
-
-          # fetch and parse player names
-          $html = (Invoke-WebRequest 'https://www.playgenerals.online/players').Content
-          [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
+          $html=(Invoke-WebRequest 'https://www.playgenerals.online/players').Content
+          [regex]::Matches($html,"<th\s+scope=['""]row['""]>(.*?)</th>") |
             ForEach-Object {
-              $name    = $_.Groups[1].Value.Trim()
-              $pattern = '^' + [regex]::Escape($name) + '$'
-
-              if (-not (Select-String -Path $log -Pattern $pattern -Quiet)) {
-                Add-Content -Path $log -Value $name
+              $n=$_.Groups[1].Value.Trim()
+              if(-not(Select-String -Path $log -Pattern '^'+[regex]::Escape($n)+'$' -Quiet)){
+                Add-Content -Path $log -Value $n
               }
             }
 
-          # commit live log and any archive files
-          git add $log
-          if (Test-Path $arc) { git add $arc }
-          git commit -m "Update active players + archive if needed" || echo "No changes"
-          git push                                      || echo "Push skipped"
+          git add -A
+          git commit -m "Update active players; archive if needed" || echo "No changes"
+          git push || echo "Push skipped"
