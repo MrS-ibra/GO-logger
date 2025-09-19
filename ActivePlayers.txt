@@ -446,3 +446,5 @@ WalkingStuka
 Fusion145
 Zonix
 Unga Murunga
+VII
+[np] nexus
