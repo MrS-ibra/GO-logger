@@ -1,0 +1,36 @@
+name: Stats - Text
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Run Tracker
+        run: pwsh ./PlayerStats.ps1
+
+      - name: Commit Log
+        run: |
+          git config --global user.name "IbraBot"
+          git config --global user.email "ibra@example.com"
+          git add NewStats.txt StatsHistory.txt
+          git commit -m "Update logs" || echo "No changes to commit"
+          git push || true
+
+      - name: Send NewStats Log to Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          message=$(awk 'NF' NewStats.txt | awk '{print}' ORS='\\n')
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"$message\"}" \
+               $DISCORD_WEBHOOK
