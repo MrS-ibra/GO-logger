@@ -898,3 +898,4 @@ ix
 pein
 Najas
 dzoko_markov
+Stalli
