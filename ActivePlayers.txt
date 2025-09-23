@@ -942,3 +942,5 @@ Viceroy Bozo
 Nepix
 guidfail
 qvcz43
+PainfulPaperCut
+Turbo
