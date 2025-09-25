@@ -1096,3 +1096,5 @@ Eclipsa
 DrZ
 nHear
 kamen_p
+Atom
+HellJumper
