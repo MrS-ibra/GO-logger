@@ -1098,3 +1098,5 @@ nHear
 kamen_p
 Atom
 HellJumper
+Hamod
+Nanami
