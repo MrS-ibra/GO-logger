@@ -1207,3 +1207,6 @@ Moses
 fa23_
 Niksac
 Roeno
+Mini
+Harissa
+Hiled
