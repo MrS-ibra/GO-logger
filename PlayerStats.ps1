@@ -70,8 +70,7 @@ try {
     $vipMessages = @{
         'Kill toll^'   = '🚨 Kill toll is online!'
         '-DoMiNaToR-'  = '🚨 Domi is online!'
-        'Legionnaire'  = '🚨 Legi is online!'
-        'Legi'  = '🚨 Legi is online!'
+        'Legi'         = '🚨 Legi is online!'
     }
     $vipPriority = @('-DoMiNaToR-', 'Legionnaire', 'Kill toll^')
 
