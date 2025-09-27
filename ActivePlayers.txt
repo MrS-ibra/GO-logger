@@ -1283,3 +1283,5 @@ Blarstar
 Carnage
 CJ
 khaled
+Zasa_86
+Gen.CmdHuman
