@@ -1242,3 +1242,5 @@ Servant 7
 MiuraSV
 armorlord
 TheManWithTheLegendHimself
+ibra6
+ibra5
