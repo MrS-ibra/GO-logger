@@ -72,7 +72,7 @@ try {
         '-DoMiNaToR-'  = '🚨 Domi is online!'
         'Legi'         = '🚨 Legi is online!'
     }
-    $vipPriority = @('-DoMiNaToR-', 'Legionnaire', 'Kill toll^')
+    $vipPriority = @('-DoMiNaToR-', 'Legi', 'Kill toll^')
 
     $playerNames = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
                    ForEach-Object { $_.Groups[1].Value }
