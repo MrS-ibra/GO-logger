@@ -1429,3 +1429,5 @@ copter
 M.B.O-10
 ZEDD
 sa555
+ZioPit
+AzogMason86
