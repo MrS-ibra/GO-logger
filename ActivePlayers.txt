@@ -1549,3 +1549,4 @@ EAGLE
 ElBoogie
 Lusnica
 magicman.exe
+Bofkont
