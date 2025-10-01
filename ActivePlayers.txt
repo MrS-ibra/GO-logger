@@ -60,3 +60,9 @@ DMT
 ROLL
 achkarman
 quick_match
+[UA]Den^
+Abdallah
+DarkSide
+TrueSight
+-Mesh^Taco
+gondy
