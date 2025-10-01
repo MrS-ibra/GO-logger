@@ -138,3 +138,5 @@ FaMaFreNcH
 -Strider
 ope05271
 Gen.CmdHuman
+Mr.Magnet
+Prime-run
