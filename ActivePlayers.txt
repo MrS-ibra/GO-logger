@@ -19,3 +19,5 @@ Top-G
 wombatisland
 oddmanager
 majestic
+fury
+Sniper1
