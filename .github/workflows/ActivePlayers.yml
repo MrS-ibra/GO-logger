@@ -19,51 +19,45 @@ jobs:
           GIT_EMAIL: ibra@example.com
         run: |
           git config user.name  $env:GIT_USER; git config user.email $env:GIT_EMAIL
+          $log='ActivePlayers.txt'; $arc='archive'
+          if(-not(Test-Path $log)){ New-Item $log -ItemType File >$null }
 
-          $log = 'ActivePlayers.txt'
-          $arc = 'archive'
+          if((Get-Date).Day -eq 1){
+            $p=(Get-Date).AddMonths(-1)
+            $destDir="$arc/$($p.ToString('yyyy-MM'))"
+            New-Item -ItemType Directory -Path $destDir -Force >$null
 
-          if (-not (Test-Path $log)) {
-            New-Item $log -ItemType File > $null
-          }
+            $baseName="ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
+            $destPath=Join-Path $destDir $baseName
+            $marker=Join-Path $destDir ".archived-$($p.ToString('yyyy-MM-dd'))"
 
-          # If today is the 1st, archive last month's log (idempotent)
-          if ((Get-Date).Day -eq 1) {
-            $p = (Get-Date).AddMonths(-1)
-            $destDir = "$arc/$($p.ToString('yyyy-MM'))"
-            New-Item -ItemType Directory -Path $destDir -Force > $null
-
-            $baseName = "ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
-            $destPath = Join-Path $destDir $baseName
-
-            if (Test-Path $destPath) {
-              # find a non-colliding name: ActivePlayers-YYYY-MM-DD_1.txt, _2, ...
-              $index = 1
-              $baseNoExt = $baseName -replace '\.txt$',''
-              do {
-                $destPath = Join-Path $destDir ("{0}_{1}.txt" -f $baseNoExt, $index)
-                $index++
-              } while (Test-Path $destPath)
+            if(Test-Path $marker){
+              Write-Host "Archive already created for $($p.ToString('yyyy-MM-dd')). Skipping."
+            } else {
+              if(Test-Path $destPath){
+                $i=1
+                $baseNoExt=$baseName -replace '\.txt$',''
+                do {
+                  $destPath=Join-Path $destDir ("{0}_{1}.txt" -f $baseNoExt, $i)
+                  $i++
+                } while(Test-Path $destPath)
+              }
+              Move-Item -Path $log -Destination $destPath
+              New-Item $log -ItemType File -Force >$null
+              New-Item -Path $marker -ItemType File -Force >$null
             }
-
-            Move-Item -Path $log -Destination $destPath
-            New-Item $log -ItemType File -Force > $null
           }
 
-          # Fetch player list and append only new names (avoid duplicates)
-          $html = (Invoke-WebRequest 'https://www.playgenerals.online/players').Content
-          [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
+          $html=(Invoke-WebRequest 'https://www.playgenerals.online/players').Content
+          [regex]::Matches($html,"<th\s+scope=['""]row['""]>(.*?)</th>") |
             ForEach-Object {
               $n = $_.Groups[1].Value.Trim()
-              if ($n -ne '') {
-                $pattern = '^' + [regex]::Escape($n) + '$'
-                if (-not (Select-String -Path $log -Pattern $pattern -Quiet)) {
-                  Add-Content -Path $log -Value $n
-                }
+              $pattern = '^' + [regex]::Escape($n) + '$'
+              if(-not (Select-String -Path $log -Pattern $pattern -Quiet)){
+                Add-Content -Path $log -Value $n
               }
             }
 
-          # Commit and push changes if any (non-fatal if nothing to commit or push fails)
           git add -A
-          git commit -m "Update active players; archive if needed" || Write-Host "No changes to commit"
-          git push || Write-Host "Push skipped or failed"
+          git commit -m "Update active players; archive if needed" || echo "No changes"
+          git push || echo "Push skipped"
