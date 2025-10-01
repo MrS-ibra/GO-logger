@@ -1,20 +1,16 @@
 name: Track Active Players
-
 on: workflow_dispatch
-
 jobs:
   run:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_PAT }}
-
       - name: Track & Archive Players
         shell: pwsh
         env:
-          GIT_USER:  IbraBot
+          GIT_USER: IbraBot
           GIT_EMAIL: ibra@example.com
         run: |
           git config user.name  $env:GIT_USER; git config user.email $env:GIT_EMAIL
@@ -23,7 +19,7 @@ jobs:
           if((Get-Date).Day -eq 1){
             $p=(Get-Date).AddMonths(-1)
             New-Item -ItemType Directory -Path "$arc/$($p.ToString('yyyy-MM'))" -Force >$null
-            Move-Item $log "$arc/$($p.ToString('yyyy-MM'))/ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
+            Move-Item -Force $log "$arc/$($p.ToString('yyyy-MM'))/ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
             New-Item $log -ItemType File -Force >$null
           }
           $html=(Invoke-WebRequest 'https://www.playgenerals.online/players').Content
