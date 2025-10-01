@@ -1,12 +1,9 @@
 name: Track Active Players
-
-on:
-  workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   run:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
         with:
@@ -20,31 +17,20 @@ jobs:
         run: |
           git config user.name  $env:GIT_USER; git config user.email $env:GIT_EMAIL
           $log='ActivePlayers.txt'; $arc='archive'
+
           if(-not(Test-Path $log)){ New-Item $log -ItemType File >$null }
 
           if((Get-Date).Day -eq 1){
             $p=(Get-Date).AddMonths(-1)
-            $destDir="$arc/$($p.ToString('yyyy-MM'))"
-            New-Item -ItemType Directory -Path $destDir -Force >$null
+            $dir="$arc/$($p.ToString('yyyy-MM'))"
+            $dest="$dir/ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
 
-            $baseName="ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
-            $destPath=Join-Path $destDir $baseName
-            $marker=Join-Path $destDir ".archived-$($p.ToString('yyyy-MM-dd'))"
+            New-Item -ItemType Directory -Path $dir -Force >$null
 
-            if(Test-Path $marker){
-              Write-Host "Archive already created for $($p.ToString('yyyy-MM-dd')). Skipping."
-            } else {
-              if(Test-Path $destPath){
-                $i=1
-                $baseNoExt=$baseName -replace '\.txt$',''
-                do {
-                  $destPath=Join-Path $destDir ("{0}_{1}.txt" -f $baseNoExt, $i)
-                  $i++
-                } while(Test-Path $destPath)
-              }
-              Move-Item -Path $log -Destination $destPath
+            # ✅ Only archive if it hasn’t already been done
+            if(-not (Test-Path $dest)){
+              Move-Item $log $dest
               New-Item $log -ItemType File -Force >$null
-              New-Item -Path $marker -ItemType File -Force >$null
             }
           }
 
