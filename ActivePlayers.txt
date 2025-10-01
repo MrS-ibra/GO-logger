@@ -368,3 +368,5 @@ K H A L E D
 almestikawi^
 ICU
 Scorpion
+haji_tofe
+chaani
