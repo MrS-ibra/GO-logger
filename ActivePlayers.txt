@@ -433,3 +433,5 @@ Viceroy Bozo
 PainfulPaperCut
 M3RC3NARY
 Skewa
+Sans
+WSK
