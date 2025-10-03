@@ -778,3 +778,5 @@ Solven
 Boro
 Blukat
 DoPe
+Vosa
+RANGER
