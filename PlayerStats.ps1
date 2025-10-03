@@ -9,7 +9,6 @@ try {
     } else {
         $online = 0
     }
-    $online += 2
 
     # 2) Fetch 24-hour stats JS block and parse arrays
     $statsUrl  = 'https://www.playgenerals.online/servicestats'
