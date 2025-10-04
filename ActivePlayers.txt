@@ -1126,3 +1126,5 @@ zh001
 ALSHA3R
 psycho_mantis
 NoxchoVuSo
+pretender
+schildburger
