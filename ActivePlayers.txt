@@ -1034,3 +1034,5 @@ Gee
 Xfactor
 Dura
 FM
+KaleniG
+HRQ
