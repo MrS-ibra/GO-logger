@@ -1,0 +1,104 @@
+name: Chart - New Players — Last 30 Days
+
+on:
+  workflow_dispatch:
+
+jobs:
+  chart-new-players-30d:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate 30-Day Cumulative New-Players chart
+        shell: pwsh
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          # 1) Read and parse StatsHistory.txt (lines: yyyy-MM-dd HH:mm,online,total)
+          $raw = Get-Content 'StatsHistory.txt'
+          $entries = $raw | ForEach-Object {
+            $p = $_ -split ','
+            [PSCustomObject]@{
+              Date  = ([datetime]$p[0]).Date
+              Total = [int]$p[2]
+            }
+          } | Sort-Object Date
+
+          # 2) Build the last-30-day window
+          $today  = (Get-Date).Date
+          $dates  = 0..29 | ForEach-Object { $today.AddDays(-29 + $_) }
+          $labels = $dates | ForEach-Object { $_.ToString('MMM d') }
+
+          # 3) Compute daily new players
+          $daily = foreach ($d in $dates) {
+            $prev = $entries | Where-Object Date -eq $d.AddDays(-1) | Select-Object -Last 1
+            $curr = $entries | Where-Object Date -eq $d            | Select-Object -Last 1
+            if ($prev -and $curr) { $curr.Total - $prev.Total } else { 0 }
+          }
+
+          # 4) Turn daily into running cumulative total
+          $running = 0
+          $data = foreach ($x in $daily) {
+            $running += $x
+            $running
+          }
+
+          # 5) Alternate two Generals-logo blues per bar
+          $colors = for ($i = 0; $i -lt $data.Count; $i++) {
+            if ($i % 2 -eq 0) { '#0987db' } else { 'dodgerblue' }
+          }
+
+          # 6) Build QuickChart payload (cumulative style)
+          $cfg = @{
+            type = 'bar'
+            data = @{
+              labels   = $labels
+              datasets = @(@{
+                label           = 'Cumulative New Players'
+                data            = $data
+                backgroundColor = $colors
+                borderColor     = $colors
+                fill            = $true
+              })
+            }
+            options = @{
+              plugins = @{
+                datalabels = @{
+                  display = $true
+                  color   = 'white'
+                  anchor  = 'end'
+                  align   = 'top'
+                  font    = @{ size = 7 }
+                  offset  = -4
+                }
+              }
+              title  = @{ display = $true; text = 'New Players — Last 30 Days'; fontColor = 'red' }
+              legend = @{ display = $false }
+              scales = @{
+                x = @{ ticks = @{ autoSkip    = $false; maxRotation = 45; minRotation = 45 } }
+                y = @{ ticks = @{ beginAtZero = $true } }
+              }
+              layout = @{ padding = @{ top = 40; left = 10 } }
+            }
+          } | ConvertTo-Json -Depth 10 -Compress
+
+          # 7) Fetch chart PNG
+          $url = "https://quickchart.io/chart?c=" + [uri]::EscapeDataString($cfg)
+          Invoke-WebRequest -Uri $url -OutFile NewPlayers30DayChart.png -ErrorAction Stop
+
+          # 8) Overlay logo
+          Invoke-WebRequest -Uri 'https://i.imgur.com/Zo9RY7b.png' -OutFile logo.png -ErrorAction Stop
+          $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
+                 ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
+          if (-not $magick) { throw "ImageMagick not found on PATH." }
+          & $magick NewPlayers30DayChart.png logo.png -gravity north -geometry 260x260+10+10 -composite NewPlayers30DayChart.png
+
+          # 9) Post to Discord
+          Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK -Method Post -Form @{
+            payload_json = (@{ content = '' } | ConvertTo-Json -Compress)
+            file         = Get-Item NewPlayers30DayChart.png
+          }
+
+          Write-Host "✅ Posted cumulative new-players chart for last 30 days."

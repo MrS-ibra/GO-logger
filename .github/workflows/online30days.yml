@@ -1,0 +1,98 @@
+name: Chart - Online Players — Last 30 Days
+
+on:
+  workflow_dispatch:
+
+jobs:
+  chart-30d:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate 30-Day chart & post to Discord
+        shell: pwsh
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          # 1) Fetch the stats page
+          $html = (Invoke-WebRequest 'https://www.playgenerals.online/servicestats' `
+                   -UseBasicParsing -ErrorAction Stop).Content
+
+          # 2) Extract the 30-day players & labels arrays
+          $playersRaw = ($html -split 'player_stats_30d_data_players = \[')[1] `
+                        -split '\];' | Select-Object -First 1
+          $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] `
+                        -split '\];' | Select-Object -First 1
+
+          $players = $playersRaw -split ',' | ForEach-Object { [int]($_.Trim('"')) }
+          $labels  = $labelsRaw  -split ',' | ForEach-Object { $_.Trim('"') }
+
+          # 3) Build alternating cyan shades array
+          $colors = for ($i = 0; $i -lt $players.Count; $i++) {
+            if ($i % 2 -eq 0) { '#bdba33' } else { '#dedb2a' }
+          }
+
+          # 4) Build QuickChart JSON payload with alternating bar colors
+          $cfg = @{
+            type = 'bar'
+            data = @{
+              labels   = $labels
+              datasets = @(@{
+                label           = 'Players'
+                data            = $players
+                backgroundColor = $colors
+                borderColor     = $colors
+                fill            = $true
+              })
+            }
+            options = @{
+              plugins = @{
+                datalabels = @{
+                  display = $true
+                  color   = 'white'
+                  anchor  = 'end'
+                  align   = 'top'
+                  font    = @{ size = 9 }
+                  offset  = -4
+                }
+              }
+              title  = @{ display = $true; text = 'Online Players — Last 30 Days'; fontColor = 'red' }
+              legend = @{ display = $false }
+              scales = @{
+                x = @{
+                  ticks = @{
+                    maxRotation = 90
+                    minRotation = 90
+                    autoSkip    = $false
+                    font        = @{ size = 8 }
+                  }
+                }
+                y = @{
+                  ticks = @{
+                    font = @{ size = 8 }
+                  }
+                }
+              }
+              layout = @{ padding = @{ top = 40; left = 10 } }
+            }
+          } | ConvertTo-Json -Depth 10 -Compress
+
+          # 5) URL-encode and download the chart PNG
+          $chartUrl = "https://quickchart.io/chart?c=" + [Uri]::EscapeDataString($cfg)
+          Write-Host "Chart URL: $chartUrl"
+          Invoke-WebRequest -Uri $chartUrl -OutFile Online30DayChart.png -ErrorAction Stop
+
+          # 6) Overlay logo via ImageMagick
+          Invoke-WebRequest 'https://i.imgur.com/Zo9RY7b.png' -OutFile logo.png -ErrorAction Stop
+          $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
+          if (-not $magick) { $magick = (Get-Command convert -ErrorAction SilentlyContinue)?.Source }
+          if (-not $magick) { throw "ImageMagick not found" }
+          & $magick Online30DayChart.png logo.png -gravity north -geometry 260x260+10+10 -composite Online30DayChart.png
+
+          # 7) Post to Discord (no username override)
+          Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK -Method Post -Form @{
+            payload_json = (@{ content = '' } | ConvertTo-Json -Compress)
+            file         = Get-Item Online30DayChart.png
+          }
