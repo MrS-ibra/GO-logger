@@ -1542,3 +1542,5 @@ MebraDorgan
 sgt.pepper
 Toxic
 Ammar
+General Lello
+Micho
