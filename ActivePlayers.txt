@@ -1706,3 +1706,5 @@ Cooq
 user.d503
 -SLY^
 NaturalHunter
+Janot
+Shane of Homa
