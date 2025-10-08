@@ -1700,3 +1700,5 @@ HK84
 charlo
 MiloXor
 killtoo
+MrNiku
+fanatic-alien
