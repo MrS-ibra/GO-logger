@@ -1778,3 +1778,4 @@ Niko Stathis
 Oglan
 Saga
 WoodyMi
+SupplyTruck
