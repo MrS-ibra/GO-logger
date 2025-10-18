@@ -4042,3 +4042,4 @@ Talon
 ! 0xWereWolf
 ^Sniper^
 Sigma NATYRAL
+Ahmed Fared
