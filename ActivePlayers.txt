@@ -4041,3 +4041,4 @@ leo_sb
 Talon
 ! 0xWereWolf
 ^Sniper^
+Sigma NATYRAL
