@@ -1,0 +1,49 @@
+name: Track Active Players
+on: workflow_dispatch
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Track & Archive Players
+        shell: pwsh
+        env:
+          GIT_USER: IbraBot
+          GIT_EMAIL: ibra@example.com
+        run: |
+          git config user.name  $env:GIT_USER; git config user.email $env:GIT_EMAIL
+          $log='ActivePlayers.txt'; $arc='archive'
+
+          if(-not(Test-Path $log)){ New-Item $log -ItemType File >$null }
+
+          if((Get-Date).Day -eq 1){
+            $p=(Get-Date).AddMonths(-1)
+            $dir="$arc/$($p.ToString('yyyy-MM'))"
+            $dest="$dir/ActivePlayers-$($p.ToString('yyyy-MM-dd')).txt"
+
+            New-Item -ItemType Directory -Path $dir -Force >$null
+
+            # ✅ Only archive if it hasn’t already been done
+            if(-not (Test-Path $dest)){
+              Move-Item $log $dest
+              New-Item $log -ItemType File -Force >$null
+            }
+          }
+
+          $html=(Invoke-WebRequest 'https://www.playgenerals.online/players').Content
+          [regex]::Matches($html,"<th\s+scope=['""]row['""]>(.*?)</th>") |
+            ForEach-Object {
+              $n = $_.Groups[1].Value.Trim()
+              $pattern = '^' + [regex]::Escape($n) + '$'
+              if(-not (Select-String -Path $log -Pattern $pattern -Quiet)){
+                Add-Content -Path $log -Value $n
+              }
+            }
+
+          git add -A
+          git commit -m "Update active players; archive if needed" || echo "No changes"
+          git push || echo "Push skipped"

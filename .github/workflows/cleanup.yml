@@ -1,0 +1,63 @@
+name: Cleanup Workflow Runs
+
+on:
+  schedule:
+    - cron: '0 0 */1 * *'
+  workflow_dispatch:       
+
+jobs:
+  cleanup:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Run cleanup script
+        shell: pwsh
+        run: |
+          $repo = "MrS-ibra/GO-logger"
+          $token = "${{ secrets.GH_PAT }}"
+
+          $headers = @{
+              Authorization = "Bearer $token"
+              Accept        = "application/vnd.github+json"
+              "X-GitHub-Api-Version" = "2022-11-28"
+          }
+
+          $deletedCount = 0
+
+          do {
+              Write-Host "`n📄 Fetching workflow runs from page 1..."
+              try {
+                  $runResp = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/actions/runs?per_page=100&page=1" -Headers $headers
+                  $runs = $runResp.workflow_runs | Where-Object { $_.status -eq "completed" }
+              } catch {
+                  Write-Host "❌ Failed to fetch runs: $_" -ForegroundColor Red
+                  break
+              }
+
+              if ($runs.Count -eq 0) {
+                  Write-Host "✅ No more completed runs to delete."
+                  break
+              }
+
+              foreach ($run in $runs) {
+                  $runId = $run.id
+                  $name = $run.name
+                  $created = Get-Date $run.created_at
+
+                  Write-Host "🗑️ Deleting run $runId ($name) created at $created..."
+                  try {
+                      Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/actions/runs/${runId}" `
+                                        -Method DELETE -Headers $headers
+                      $deletedCount++
+                  } catch {
+                      Write-Host "⚠️ Failed to delete run ${runId}: $_" -ForegroundColor Red
+                  }
+              }
+
+              Start-Sleep -Milliseconds 500
+          } while ($true)
+
+          Write-Host "`n✅ Finished. Deleted $deletedCount completed runs across all workflows."

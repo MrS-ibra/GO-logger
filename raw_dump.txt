@@ -1,0 +1,431 @@
+
+<html>
+<script src="vendor/device-uuid.min.js"></script>
+
+<script type="text/javascript">
+    var uuid = new DeviceUUID().get();
+    SetDarkMode(IsDarkMode(), false);
+
+    function IsDarkMode()
+    {
+        // check for explicit user option
+        if (localStorage.getItem('darkmode'))
+        {
+            return localStorage.getItem('darkmode') == 'true';
+        }
+        else
+        {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? true : false;
+        }
+    }
+
+    function SetDarkMode(dark, shouldSave)
+    {
+        document.getElementsByTagName("html")[0].setAttribute("data-bs-theme", dark ? "dark" : "light");
+
+        if (shouldSave)
+        {
+            localStorage.setItem('darkmode', dark);
+        }
+
+        g_IsDarkMode = dark;
+    }
+
+    window.onload = function ()
+    {
+        SetDarkMode(IsDarkMode(), false);
+    }
+
+    window.addEventListener('DOMContentLoaded', () =>
+    {
+        SetDarkMode(IsDarkMode(), false);
+    });
+</script>
+
+
+
+<head>
+	<link href="vendor/fontawesome/css/all.min.css" rel="stylesheet" />
+	<link href="vendor/animate/animate.min.css" rel="stylesheet" />
+	<link href="/comments.css" rel="stylesheet" />
+	<meta content='maximum-scale=1.0, initial-scale=1.0, width=device-width' name='viewport' />
+
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+	<!--
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+	<link rel="manifest" href="/site.webmanifest" />
+	<meta name="msapplication-TileImage" content="/apple-touch-icon.png" />
+		-->
+
+	<link href='vendor/bootstrap/css/bootstrap.min.css' rel='stylesheet' />
+	<link href='theme.css' rel='stylesheet' />
+	<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+	<script src="vendor/jquery/jquery.min.js"></script>
+	<script src="vendor/popper/popper.min.js"></script>
+
+	<script type="text/javascript">
+    // ===== Scroll to Top ====
+$(window).scroll(function() {
+    if ($(this).scrollTop() >= 50) {        // If page is scrolled more than 50px
+        $('#return-to-top').fadeIn(200);    // Fade in the arrow
+    } else {
+        $('#return-to-top').fadeOut(200);   // Else fade out the arrow
+    }
+});
+$('#return-to-top').click(function() {      // When arrow is clicked
+    $('body,html').animate({
+        scrollTop : 0                       // Scroll to top of body
+    }, 500);
+});
+	</script>
+</head>
+
+
+<body class="body_subpage">
+
+
+	<div class="container-lg">
+		<!-- HEADER -->
+		
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class='navbar-brand' href='/'><font class='logo_pt1_color logo_bigfont user-select-none'><img src="logo.png" height="44">&nbsp;</i>Generals</font><font class='logo_pt2_color logo_bigfont user-select-none'>Online</font></a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mb-2 mb-lg-0 ms-auto">
+
+            <ul class="navbar-nav" style="margin-right: 100px;">
+      
+                <li class="nav-item"><a class="nav-link" href="/matches">Lobbies <span class="badge text-bg-secondary">5</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="/players">Players <span class="badge text-bg-secondary">21</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="/faq">FAQ</span></a></li>
+               
+                <li class="nav-item"><a class="nav-link" href="/bugs">BugTracker</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="/development">Dev</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="https://status.playgenerals.online">Service Status</span></a></li>
+    </ul>
+
+          <div class="position-relative">
+
+          <a href="https://discord.playgenerals.online" target="_blank"><i class="fa-brands fa-discord" style="padding-right:5px;"></i></a>
+
+          <a href="https://github.com/GeneralsOnlineDevelopmentTeam/" target="_blank"><i class="fa-brands fa-github"  style="padding-right:5px;"></i></a>
+
+          <a href='#' onclick="ToggleDarkMode();">
+              <i class="fa-solid fa-circle-half-stroke darkmode_icon"></i>
+          </a>
+
+
+        </div>
+&nbsp;&nbsp;
+
+
+            <a href="https://www.playgenerals.online/#download" class="btn btn-primary rounded-0" tabindex="-1" role="button">Download Now</a><li class="nav-item dropdown"><li class="nav-item dropdown">
+                <!--
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-user"></i>
+              </a>
+              <ul class="dropdown-menu rounded-0" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" href="javascript:ShowMessageBox('Coming Soon', 'Check back shortly...');">Login / Register</a></li>
+              </ul>
+            </li>
+-->
+
+        </ul>
+      </div>
+    </div>
+
+
+<div class="dropdown">
+  
+  
+</div>
+
+      </div>
+    </div>
+  </nav>
+
+
+<script type="text/javascript">
+function ToggleDarkMode()
+{
+    SetDarkMode(!IsDarkMode(), true);
+}
+
+function ToggleNotifications()
+{
+  //document.getElementById("msgBoxModal_title").innerHTML = title;
+ // document.getElementById("msgBoxModal_message").innerHTML = message;
+  $("#notificationsModal").modal("show");
+
+  return;
+  var notificationsElement = document.getElementById("notifications_list");
+
+  if (notificationsElement.style.display == "none")
+  {
+    notificationsElement.style.display = "block";
+  }
+  else
+  {
+    notificationsElement.style.display = "none";
+  }
+}
+
+function ConsumeNotificationWithoutRedirect($notification_id)
+{
+  alert($notification_id);
+}
+</script>		<!-- END HEADER -->
+	</div>
+
+	
+<div align="center">
+
+    <h1><font class='logo_pt1_color'>Active</font><font class='logo_pt2_color'>Players</font></h1>
+    <br />
+
+    <center><h3>There are 21 online player(s).</h3></center><center><h4>Total Lifetime Players: 2261.</h4></center><div class="container-sm"><table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Status</th>
+      <th scope="col">Game Client</th>
+      <th scope="col">Duration</th>
+    </tr>
+  </thead>
+  <tbody><tr>
+      <th scope='row'>SerAph</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 30Hz</td>
+      <td>Playing for 1 hours, 2 minutes, 36 seconds</td>
+    </tr><tr>
+      <th scope='row'>bjorn</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 46 minutes, 5 seconds</td>
+    </tr><tr>
+      <th scope='row'>Firass01</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 56 minutes, 22 seconds</td>
+    </tr><tr>
+      <th scope='row'>Kill toll^</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 40 minutes, 37 seconds</td>
+    </tr><tr>
+      <th scope='row'>PrimeH0pe</th>
+      <td>In Server List / Chat Room</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 2 minutes, 9 seconds</td>
+    </tr><tr>
+      <th scope='row'>-Strider</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 51 minutes, 30 seconds</td>
+    </tr><tr>
+      <th scope='row'>palamer93</th>
+      <td>In lobby &#039;GNS&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 30Hz</td>
+      <td>Playing for 1 hours, 20 minutes, 59 seconds</td>
+    </tr><tr>
+      <th scope='row'>Ab Jbril</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 1 hours, 17 minutes, 46 seconds</td>
+    </tr><tr>
+      <th scope='row'>Don Haoss</th>
+      <td>In Server List / Chat Room</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 39 minutes, 34 seconds</td>
+    </tr><tr>
+      <th scope='row'>abu3li1995</th>
+      <td>In lobby &#039;GNS&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 30Hz</td>
+      <td>Playing for 1 hours, 18 minutes, 44 seconds</td>
+    </tr><tr>
+      <th scope='row'>[A]dmiral El-PeJte</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 30Hz</td>
+      <td>Playing for 4 minutes, 24 seconds</td>
+    </tr><tr>
+      <th scope='row'>ProfessorX</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 53 minutes, 42 seconds</td>
+    </tr><tr>
+      <th scope='row'>_SUSKY_</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 30Hz</td>
+      <td>Playing for 53 minutes, 50 seconds</td>
+    </tr><tr>
+      <th scope='row'>Carnage</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 44 minutes, 35 seconds</td>
+    </tr><tr>
+      <th scope='row'>WexleR</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 40 minutes, 37 seconds</td>
+    </tr><tr>
+      <th scope='row'>Chikimaw</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 1 hours, 39 minutes, 29 seconds</td>
+    </tr><tr>
+      <th scope='row'>zxz</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 1 hours, 37 minutes, 58 seconds</td>
+    </tr><tr>
+      <th scope='row'>espiranza makrem</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 52 minutes, 15 seconds</td>
+    </tr><tr>
+      <th scope='row'>Aaaaaarb</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 1 hours, 17 minutes, 0 seconds</td>
+    </tr><tr>
+      <th scope='row'>BlackBox217</th>
+      <td>In Server List / Chat Room</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 43 minutes, 27 seconds</td>
+    </tr><tr>
+      <th scope='row'>warriorimhef</th>
+      <td>In lobby &#039;Generals Online Lobby&#039; -  Match In Progress</td>
+      <td>GeneralsOnline 60Hz</td>
+      <td>Playing for 1 hours, 48 minutes, 23 seconds</td>
+    </tr></tbody></table></div>    
+    </div>
+    </div>
+
+
+	<!-- FOOTER -->
+	    <br><br>
+    <div align="center" class="footer">
+      <br>
+        <div class="row" align="center" style="width:99%">
+          <div class="col-md-4">
+            <h4><font class='logo_pt1_color'>Generals</font><font class='logo_pt2_color'>Online</font></h4>
+           <!-- <i class="fa-solid fa-envelope">&nbsp;</i><a href="https://www.playgenerals.online/contact">Contact Us</a>
+              <br />
+               -->
+              <i class="fa-brands fa-discord">&nbsp;</i><a href="https://discord.playgenerals.online"  target="_blank">Join Discord</a>
+	<br /><br /><br />
+  </div>
+  <div class="col-md-4">
+    <h4><font class='logo_pt1_color'>Partner</font><font class='logo_pt2_color'>Communities</font></h4>
+  <a href="https://discord.playgenerals.online"  target="_blank"><img src="assets/images/commandcenterlogo.webp" style="max-height:135px; margin:5px;"></a>
+  <a href="https://www.gamereplays.org"  target="_blank"><img src="assets/images/gamereplays_logo.webp" style="max-height:135px; margin:5px;"></a>
+  	<br /><br /><br />
+</div>
+
+            <div class="col-md-4">
+                <h4>Information</h4>
+
+
+                <small>
+                    <i class="fa-solid fa-link"></i>&nbsp;<a href="https://www.playgenerals.online/faq">
+	Frequently Asked Questions
+</a>
+                    
+                </small><br />
+
+                                <small>
+                    <i class="fa-solid fa-link"></i>&nbsp;<a href="https://www.playgenerals.online/privacypolicy">
+	Privacy Policy
+</a>
+                    
+                </small><br />
+
+                <small>
+                    <i class="fa-solid fa-link"></i>&nbsp;<a href="https://status.playgenerals.online">Service Status</a>
+                </small><br />
+            </div>
+      </div>
+
+      <div align="center" >
+        <br>
+        <div class="row" align="center" style="width:99%">
+            <p class="copyright_footer">
+                <font class='logo_pt1_color'><img src="logo.png" height="16">&nbsp;</i>Generals</font><font class='logo_pt2_color'>Online</font> © 2025                <br />
+                Generals Online is not associated with or endorsed by Command & Conquer, Electronic Arts Inc, Steam, Valve Corporation, Discord Corporation. or their subsidiaries.<br />All rights reserved. All trademarks are the property of their respective owners.
+                <br>
+                <!--
+                <a href="https://www.playgenerals.online/privacy_policy">Legal, Privacy Policy & Terms of Service</a>
+                    -->
+            </p>
+        </div>
+    </div>
+
+
+<!-- END TIME -->
+  </div>
+	<!-- Return to Top -->
+    <!--
+	<a href="javascript:window.scrollTo(0, 0);" id="return-to-top">
+		<i class="fa-solid fa-chevron-up"></i>
+	</a>
+        -->
+
+	<script type="text/javascript">
+    function ShowMessageBox(title, message)
+    {
+      document.getElementById("msgBoxModal_title").innerHTML = title;
+      document.getElementById("msgBoxModal_message").innerHTML = message;
+      $("#msgBoxModal").modal("show");
+        }
+
+	</script>
+
+	<!-- MsgBox -->
+	<div class="modal fade" id="msgBoxModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content rounded-0">
+				<div class="modal-header">
+					<h5 class="modal-title" id="msgBoxModal_title"></h5>
+					<button type="button" class="btn-close rounded-0" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="msgBoxModal_message"></div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 2 option box -->
+	<div class="modal fade" id="twooptionBoxModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content rounded-0">
+				<div class="modal-header">
+					<h5 class="modal-title" id="twooptionBoxModal_title"></h5>
+					<button type="button" class="btn-close rounded-0" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="twooptionBoxModal_message"></div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary rounded-0" data-bs-dismiss="modal" id="twooptionBoxModal_opt1"></button>
+					<button type="button" class="btn btn-secondary rounded-0" data-bs-dismiss="modal" id="twooptionBoxModal_opt2"></button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"1b2b02ddbcbf410faba65841ff56c6d8","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+
+<head>
+	<title>GeneralsOnline &#8211; A Modern, re-implementation of Command & Conquer Generals Online.</title>
+	<meta name="description" content="A Modern, re-implementation of Command & Conquer Generals Online">
+	<meta name="keywords" content="command and conquer, command & conquer, generals, zero hour, command & conquer generals, command & conquer generals zero hour, generals online, play generals, play generals online, play zero hour, play zero hour online, zero hour only">
+</head>
+
+</html>
