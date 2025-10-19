@@ -4645,3 +4645,5 @@ khaled SKINS
 urmom
 aso
 لوا
+Le_Roi
+nidal
