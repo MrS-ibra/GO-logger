@@ -4569,3 +4569,5 @@ govid449
 Krakker
 Fayiz A.
 nigro
+AndroidSamsung
+AAS#2255
