@@ -5768,3 +5768,6 @@ Sʰм𝒾Ž𝕒Roo
 &Oslash;&sect;&Ugrave;&bdquo;&Ugrave;&bdquo;&Ugrave;&hellip;&Oslash;&uml;&Ugrave;&Scaron;
 &Icirc;&micro;&Eacute;&ordf;n &Atilde;&Yuml;&Aring;&Ograve;&scaron; 04
 LUSIFER--MORNINGSTAR
+&ETH;&ETH;&frac12;&ETH;&sup3;&ETH;&raquo;&ETH;&cedil;&ETH;&sup1;&Ntilde;&ETH;&ordm;&ETH;&cedil;&ETH;&sup1; &Ntilde;&Dagger;&ETH;&deg;&ETH;&sup1;
+&Ugrave;&fnof;&Oslash;&sect;&Oslash;&uml;&Ugrave;&Scaron;&Oslash;&ordf;&Oslash;&sect;&Ugrave;&bdquo;
+harrier du bois
