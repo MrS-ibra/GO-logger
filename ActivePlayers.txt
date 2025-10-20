@@ -5544,3 +5544,16 @@ Aseel &ccedil;&laquo;
 &Auml;&iquest;aserFN
 &Oslash;&sect;&Ugrave;&bdquo;&Oslash;&sup2;&Ugrave;&Scaron;&Oslash;&plusmn; *-*
 &ETH;ž&Ntilde;&sbquo;&Ntilde;&Dagger;&ETH;&cedil;&ETH;&frac14;&Ntilde;&fnof;&Ntilde; &ETH;&Yuml;&Ntilde;&euro;&ETH;&deg;&ETH;&sup1;&ETH;&frac14;
+A7mad
+&ETH;&ETH;&frac12;&ETH;&acute;&Ntilde;&euro;&ETH;&micro;&Ntilde;&fnof;
+&Atilde;jblock
+hardc0r3
+abass
+MultiHog
+FreeMan
+ENG-MOSAB
+blalabwghlywn13
+&eth;&bull;&eth;&bull;&nbsp;&eth;&bull;&oelig;&eth;&bull;&ndash;&eth;&bull;&pound;
+&acirc;&oelig;&tilde;911&acirc;&oelig;&tilde;&acirc;ž&oelig;&acirc;&oelig;&tilde;Z&acirc;&oelig;&tilde;
+&acirc;&sbquo;&not;l&acirc;&sbquo;&not;m&acirc;&sbquo;&not;nT
+&Oslash;&sect;&Oslash;&uml;&Ugrave;&circ; &Oslash;&sup2;&Ugrave;&Dagger;&Oslash;&plusmn;&Oslash;&sect;&Oslash;&iexcl;
