@@ -5869,3 +5869,5 @@ Sh@dow
 8866
 LB_SEKK
 omarnadman
+&aacute;&micro;&euro;&aacute;&acute;&cedil; &eth;&OElig;&eth;&scaron;&eth;&plusmn;&eth;&cent;&eth;&brvbar;
+Atrocitex
