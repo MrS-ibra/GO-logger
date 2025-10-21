@@ -5994,3 +5994,8 @@ hotcofe
 Laithraad
 yazeedb91
 jood
+gl1i
+&Oslash;&sup1;&Ugrave;&hellip;&Oslash;&plusmn;
+!#SCK
+Athanasios khairy
+Peasant
