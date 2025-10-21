@@ -6243,3 +6243,8 @@ HippoAstronaut
 !  &eth;&euro;&eth;&rsaquo;&eth;&uml; &eth;&euro;&eth;&not;&eth;ž&eth;ž
 &Ugrave;&hellip;&Oslash;&shy;&Ugrave;&hellip;&Ugrave;&circ;&Oslash;&macr; &Oslash;&shy;&Ugrave;&circ;&Oslash;&macr;&Ugrave;&Scaron;
 Scoop
+modar
+Yusuf
+MrLord
+Sokolovich
+Alpha.Male
