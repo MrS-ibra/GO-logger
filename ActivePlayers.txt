@@ -6003,3 +6003,5 @@ DZ_storm1
 osmarshal
 Partisan
 Red Amun
+&Ugrave;&fnof;&Oslash;&ordf;&Ugrave;&circ;&Oslash;&sect;&Oslash;&ordf;&Ugrave;&circ;
+Hercules
