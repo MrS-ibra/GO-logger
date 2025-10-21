@@ -5802,3 +5802,5 @@ bots.
 GoldExperience
 Fadhil
 AndrewTheMandrew
+&atilde;&euro;          &atilde;&euro;&lsquo;&eth;&bull;&eth;&euro;&eth;&fnof;
+ABO_SAMIR
