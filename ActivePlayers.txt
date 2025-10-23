@@ -6915,3 +6915,6 @@ ahmed sarhan 14
 Error
 Bin Adnan
 O̵̷ͩn̷̶̊i̵͓̎
+J&Atilde;&curren;ger
+go&Oslash;&sect;&Oslash;&uml;&Ugrave;&circ; &Oslash;&sect;&Oslash;&uml;&Oslash;&plusmn;&Oslash;&sect;&Ugrave;&Dagger;&Ugrave;&Scaron;&Ugrave;&hellip;
+A h M e D &lt;
