@@ -7406,3 +7406,5 @@ A123
 matador
 Soliyev
 karrar40
+Defender
+Pro-Rules
