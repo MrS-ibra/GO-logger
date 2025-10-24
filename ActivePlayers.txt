@@ -7575,3 +7575,5 @@ MAVERICK^
 XNX
 fozyalhabsh
 &Oslash;&pound;&Oslash;&uml;&Ugrave;&circ; &Oslash;&plusmn;&Ugrave;&sbquo;&Ugrave;&euro;&Ugrave;&Scaron;&Ugrave;&euro;&Ugrave;&Dagger;
+Next.Mastar8
+SatlaZON
