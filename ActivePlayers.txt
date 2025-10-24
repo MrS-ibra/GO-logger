@@ -7486,3 +7486,5 @@ asdhmg98
 s666888
 &acirc;&bdquo;&sup3;&acirc;&Scaron;&mdash;&Iuml;&mdash;&Acirc;&sect;&Aring;&brvbar;&atilde;&reg;&acirc;&bdquo;&oelig;
 MINATO_SAMA
+TURNIPINRUT
+Eqvrt
