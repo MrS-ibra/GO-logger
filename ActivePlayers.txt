@@ -9336,3 +9336,5 @@ nuke-general
 Faller.fBi
 serp
 &ETH;&cedil;&ETH;&frac14;&Ntilde;&euro;&ETH;&deg;&ETH;&frac12;
+Wahdan
+Russo
