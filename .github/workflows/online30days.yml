@@ -46,7 +46,7 @@ jobs:
 
           # 3) Build alternating color array
           $colors = for ($i = 0; $i -lt $players.Count; $i++) {
-            if ($i % 2 -eq 0) { '#d46d00' } else { '#d9852b' }
+            if ($i % 2 -eq 0) { '#d97e1e' } else { '#d9852b' }
           }
 
           # 4) Build QuickChart JSON payload with datalabels inside vertical
@@ -67,8 +67,8 @@ jobs:
                 datalabels = @{
                   display = $true
                   color   = 'white'
-                  anchor  = 'center'
-                  align   = 'center'
+                  anchor  = 'top'
+                  align   = 'top'
                   rotation = -90
                   clamp   = $true
                   font    = @{ size = 9; weight = 'bold' }
