@@ -58,7 +58,7 @@ jobs:
             if ($i % 2 -eq 0) { '#0987db' } else { 'dodgerblue' }
           }
 
-          # 6) Build QuickChart payload with datalabels inside bars (vertical) and chart sizing to avoid clipping
+          # 6) Build QuickChart payload with datalabels above bars (not inside) and sizing to avoid clipping
           $cfg = @{
             type = 'bar'
             data = @{
@@ -76,14 +76,13 @@ jobs:
               plugins = @{
                 datalabels = @{
                   display = $true
-                  color   = 'white'
-                  anchor  = 'center'
-                  align   = 'center'
-                  rotation = -90
-                  clamp   = $true
-                  font    = @{ size = 8; weight = 'bold' }
-                  offset  = 0
-                  padding = @{ top = 2; bottom = 2; left = 2; right = 2 }
+                  color   = 'black'
+                  anchor  = 'end'
+                  align   = 'start'
+                  rotation = 0
+                  clamp   = $false
+                  font    = @{ size = 9; weight = 'bold' }
+                  offset  = -6
                   formatter = 'function(value, ctx) { return value; }'
                 }
               }
@@ -98,7 +97,7 @@ jobs:
                   ticks = @{ font = @{ size = 8 } }
                 }
               }
-              layout = @{ padding = @{ top = 40; left = 10; right = 30; bottom = 10 } }
+              layout = @{ padding = @{ top = 60; left = 10; right = 40; bottom = 10 } }
             }
           } | ConvertTo-Json -Depth 12 -Compress
 
