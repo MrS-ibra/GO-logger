@@ -16,48 +16,61 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          $html = (Invoke-WebRequest 'https://www.playgenerals.online/servicestats' -UseBasicParsing -ErrorAction Stop).Content
+          # 1) Fetch the stats page
+          $html = (Invoke-WebRequest 'https://www.playgenerals.online/servicestats' `
+                   -UseBasicParsing -ErrorAction Stop).Content
 
-          $playersRaw = ($html -split 'player_stats_30d_data_players = \[')[1] -split '\];' | Select-Object -First 1
-          $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] -split '\];' | Select-Object -First 1
+          # 2) Extract the 30-day players & labels arrays
+          $playersRaw = ($html -split 'player_stats_30d_data_players = \[')[1] `
+                        -split '\];' | Select-Object -First 1
+          $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] `
+                        -split '\];' | Select-Object -First 1
 
+          # Robust split + trim + filter empty entries
           $players = $playersRaw -split ',' |
                      ForEach-Object { ($_ -replace '"','').Trim() } |
                      Where-Object { $_ -ne '' } |
                      ForEach-Object { [int]$_ }
 
-          # Compact label formatter: remove ordinals, try parse, fallback to token reformat
-          function Format-Label([string]$token) {
-            if (-not $token) { return $null }
-            $t = ($token -replace '"','').Trim()
-            $t = $t -replace '(\d+)(st|nd|rd|th)', '$1'
-            try {
-              $dt = [datetime]::Parse($t)
-              return $dt.ToString('MMM d').ToLower()
-            } catch {
-              $parts = $t -split '\s+'
-              if ($parts.Count -eq 2 -and ($parts[0] -as [int])) {
-                # "2 Oct" -> "Oct 2"
-                try {
-                  $dt = [datetime]::Parse("$($parts[1]) $($parts[0]) $(Get-Date).Year")
-                  return $dt.ToString('MMM d').ToLower()
-                } catch { return $t.ToLower() }
-              } elseif ($parts.Count -eq 2) {
-                # "Oct 2" -> ok
-                try {
-                  $dt = [datetime]::Parse("$t $(Get-Date).Year")
-                  return $dt.ToString('MMM d').ToLower()
-                } catch { return $t.ToLower() }
-              } else {
-                return $t.ToLower()
-              }
-            }
-          }
-
+          # Format labels to "oct 2", "oct 3" etc. (month then day) and keep all other behavior unchanged
           $labels = $labelsRaw -split ',' |
-                    ForEach-Object { Format-Label $_ } |
+                    ForEach-Object {
+                      $tok = ($_ -replace '"','').Trim()
+                      if (-not $tok) { continue }
+
+                      # remove ordinal suffixes (1st, 2nd, 3rd, 4th...)
+                      $clean = $tok -replace '(\d+)(st|nd|rd|th)', '$1'
+
+                      # Try parsing directly
+                      try {
+                        $dt = [datetime]::Parse($clean)
+                        $dt.ToString('MMM d').ToLower()
+                      } catch {
+                        # Try adding current year if needed and parse
+                        try {
+                          $dt = [datetime]::Parse("$clean $(Get-Date).Year")
+                          $dt.ToString('MMM d').ToLower()
+                        } catch {
+                          # If input is "2 Oct" or "2 Oct," swap to "Oct 2"
+                          if ($clean -match '^\s*\d{1,2}\s+\w+') {
+                            $parts = $clean -split '\s+'
+                            if ($parts.Count -ge 2) {
+                              try {
+                                $dt = [datetime]::Parse("$($parts[1]) $($parts[0]) $(Get-Date).Year")
+                                $dt.ToString('MMM d').ToLower()
+                              } catch {
+                                $clean.ToLower()
+                              }
+                            } else { $clean.ToLower() }
+                          } else {
+                            $clean.ToLower()
+                          }
+                        }
+                      }
+                    } |
                     Where-Object { $_ -ne $null -and $_ -ne '' }
 
+          # Ensure arrays match length (truncate longer one) to avoid missing/clipped column
           $count = [Math]::Min($players.Count, $labels.Count)
           if ($players.Count -ne $labels.Count) {
             Write-Host "Warning: players count ($($players.Count)) and labels count ($($labels.Count)) differ. Truncating to $count."
@@ -65,18 +78,22 @@ jobs:
             $labels  = $labels[0..($count - 1)]
           }
 
-          $colors = for ($i = 0; $i -lt $players.Count; $i++) { if ($i % 2 -eq 0) { '#bdba33' } else { '#dedb2a' } }
+          # 3) Build alternating cyan shades array
+          $colors = for ($i = 0; $i -lt $players.Count; $i++) {
+            if ($i % 2 -eq 0) { '#bdba33' } else { '#dedb2a' }
+          }
 
+          # 4) Build QuickChart JSON payload with alternating bar colors
           $cfg = @{
             type = 'bar'
             data = @{
-              labels = $labels
+              labels   = $labels
               datasets = @(@{
-                label = 'Players'
-                data = $players
+                label           = 'Players'
+                data            = $players
                 backgroundColor = $colors
-                borderColor = $colors
-                fill = $true
+                borderColor     = $colors
+                fill            = $true
               })
             }
             options = @{
@@ -84,44 +101,49 @@ jobs:
               plugins = @{
                 datalabels = @{
                   display = $true
-                  color = 'white'
-                  anchor = 'end'
-                  align = 'top'
-                  font = @{ size = 9; weight = 'bold' }
-                  offset = -4
-                  formatter = 'function(v){return v;}'
+                  color   = 'white'
+                  anchor  = 'end'
+                  align   = 'top'
+                  font    = @{ size = 9; weight = 'bold' }
+                  offset  = -4
                 }
               }
-              title = @{
-                display = $true
-                text = 'Online Players — Last 30 Days'
-                color = 'red'
-                font = @{ size = 26; weight = 'bold'; family = 'Arial' }
-              }
+              title  = @{ display = $true; text = 'Online Players — Last 30 Days'; fontColor = 'red' }
               legend = @{ display = $false }
               scales = @{
-                x = @{ ticks = @{ maxRotation = 0; minRotation = 0; autoSkip = $false; font = @{ size = 9 } } }
-                y = @{ beginAtZero = $true; ticks = @{ font = @{ size = 8 } } }
+                x = @{
+                  ticks = @{
+                    maxRotation = 90
+                    minRotation = 90
+                    autoSkip    = $false
+                    font        = @{ size = 8 }
+                  }
+                }
+                y = @{
+                  ticks = @{ font = @{ size = 8 } }
+                }
               }
-              layout = @{ padding = @{ top = 90; left = 10; right = 30; bottom = 10 } }
+              layout = @{ padding = @{ top = 40; left = 10; right = 30 } }
             }
           } | ConvertTo-Json -Depth 12 -Compress
 
+          # 5) URL-encode and download the chart PNG (set explicit width/height to avoid clipping)
           $encoded = [Uri]::EscapeDataString($cfg)
-          $width = 1400; $height = 700
+          $width = 1400
+          $height = 600
           $chartUrl = "https://quickchart.io/chart?c=$encoded&w=$width&h=$height"
           Write-Host "Chart URL: $chartUrl"
           Invoke-WebRequest -Uri $chartUrl -OutFile Online30DayChart.png -ErrorAction Stop
 
+          # 6) Overlay logo via ImageMagick
           Invoke-WebRequest 'https://i.imgur.com/Zo9RY7b.png' -OutFile logo.png -ErrorAction Stop
           $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
           if (-not $magick) { $magick = (Get-Command convert -ErrorAction SilentlyContinue)?.Source }
           if (-not $magick) { throw "ImageMagick not found" }
+          & $magick Online30DayChart.png logo.png -gravity north -geometry 260x260+10+10 -composite Online30DayChart.png
 
-          & $magick logo.png -resize 200x200\> logo-resized.png
-          & $magick Online30DayChart.png logo-resized.png -gravity north -geometry +10+10 -composite Online30DayChart.png
-
+          # 7) Post to Discord
           Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK -Method Post -Form @{
             payload_json = (@{ content = '' } | ConvertTo-Json -Compress)
-            file = Get-Item Online30DayChart.png
+            file         = Get-Item Online30DayChart.png
           }
