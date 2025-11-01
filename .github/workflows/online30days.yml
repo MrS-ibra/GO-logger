@@ -78,7 +78,7 @@ jobs:
                 display = $true
                 text    = 'Online Players — Last 30 Days'
                 color   = 'red'
-                font    = @{ size = 26; weight = 'bold'; family = 'Arial' }
+                font    = @{ size = 100; weight = 'bold'; family = 'Arial' }
               }
               legend = @{ display = $false }
               scales = @{
