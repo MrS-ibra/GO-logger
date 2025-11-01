@@ -26,25 +26,64 @@ jobs:
           $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] `
                         -split '\];' | Select-Object -First 1
 
-          # Robust split + trim + filter empty entries
+          # Robust split + trim + filter empty entries for players
           $players = $playersRaw -split ',' |
                      ForEach-Object { ($_ -replace '"','').Trim() } |
-                     Where-Object { $_ -ne '' } |
+                     Where-Object { $_ -and ($_ -ne '') } |
                      ForEach-Object { [int]$_ }
 
-          # Format labels as "oct 2", "oct 3" (lowercase month then day) to fit better
-          $labels = $labelsRaw -split ',' |
-                    ForEach-Object { ($_ -replace '"','').Trim() } |
-                    Where-Object { $_ -ne '' } |
-                    ForEach-Object {
-                      # Try to parse as date; if parsing fails, fall back to the raw token lowercased
-                      try {
-                        $dt = [datetime]::Parse($_)
-                        $dt.ToString('MMM d').ToLowerInvariant()
-                      } catch {
-                        $_.ToLowerInvariant()
-                      }
-                    }
+          # Robust split + trim + filter empty entries for labels
+          $rawLabels = $labelsRaw -split ',' |
+                       ForEach-Object { ($_ -replace '"','').Trim() } |
+                       Where-Object { $_ -and ($_ -ne '') }
+
+          # Helper: remove ordinal suffixes (1st, 2nd, 3rd, 4th...) and attempt to parse
+          function Convert-LabelToMonthDay([string]$token) {
+            if (-not $token) { return $null }
+            $clean = $token.Trim()
+
+            # remove ordinal suffixes (st, nd, rd, th)
+            $clean = $clean -replace '(\d+)(st|nd|rd|th)', '$1'
+
+            # Try several parse strategies
+            $formats = @('d MMM', 'dd MMM', 'MMM d', 'MMMM d', 'd MMMM', 'M/d/yyyy', 'yyyy-MM-dd')
+            foreach ($fmt in $formats) {
+              try {
+                $dt = [datetime]::ParseExact($clean, $fmt, $null)
+                return $dt.ToString('MMM d').ToLower()
+              } catch {}
+            }
+
+            # Try general parse as fallback
+            try {
+              $dt = [datetime]::Parse($clean)
+              return $dt.ToString('MMM d').ToLower()
+            } catch {
+              # If parse fails, attempt to swap month/day if token looks like "2 Oct" or "Oct 2"
+              if ($clean -match '^\d{1,2}\s+\w+') {
+                # try add a year to help parse
+                try {
+                  $dt = [datetime]::Parse("$clean $(Get-Date).Year")
+                  return $dt.ToString('MMM d').ToLower()
+                } catch {}
+              } elseif ($clean -match '^\w+\s+\d{1,2}') {
+                try {
+                  $dt = [datetime]::Parse("$clean $(Get-Date).Year")
+                  return $dt.ToString('MMM d').ToLower()
+                } catch {}
+              }
+            }
+
+            # final fallback: return the cleaned token lowercased (trimmed)
+            return $clean.ToLower()
+          }
+
+          # Convert each raw label into the desired "oct 2" format (lowercase month then day)
+          $labels = @()
+          foreach ($lbl in $rawLabels) {
+            $converted = Convert-LabelToMonthDay $lbl
+            if ($converted) { $labels += $converted }
+          }
 
           # Ensure arrays match length (truncate longer one) to avoid missing/clipped column
           $count = [Math]::Min($players.Count, $labels.Count)
@@ -107,7 +146,7 @@ jobs:
               }
               layout = @{ padding = @{ top = 90; left = 10; right = 30; bottom = 10 } }
             }
-          } | ConvertTo-Json -Depth 12 -Compress
+          } | ConvertTo-Json -Depth 14 -Compress
 
           # 5) URL-encode and download the chart PNG (set explicit width/height to avoid clipping)
           $encoded = [Uri]::EscapeDataString($cfg)
