@@ -58,7 +58,7 @@ jobs:
             if ($i % 2 -eq 0) { '#0987db' } else { 'dodgerblue' }
           }
 
-          # 6) Build QuickChart payload with datalabels above bars (not inside) and sizing to avoid clipping
+          # 6) Build QuickChart payload with datalabels above each bar (white) and sizing to avoid clipping
           $cfg = @{
             type = 'bar'
             data = @{
@@ -76,9 +76,9 @@ jobs:
               plugins = @{
                 datalabels = @{
                   display = $true
-                  color   = 'black'
+                  color   = 'white'
                   anchor  = 'end'
-                  align   = 'start'
+                  align   = 'top'
                   rotation = 0
                   clamp   = $false
                   font    = @{ size = 9; weight = 'bold' }
