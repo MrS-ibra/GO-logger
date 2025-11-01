@@ -45,12 +45,20 @@ jobs:
             $running
           }
 
+          # 4b) Safety: ensure labels and data same length (truncate if needed)
+          $count = [Math]::Min($labels.Count, $data.Count)
+          if ($labels.Count -ne $data.Count) {
+            Write-Host "Warning: labels ($($labels.Count)) and data ($($data.Count)) differ. Truncating to $count."
+            $labels = $labels[0..($count - 1)]
+            $data   = $data[0..($count - 1)]
+          }
+
           # 5) Alternate two Generals-logo blues per bar
           $colors = for ($i = 0; $i -lt $data.Count; $i++) {
             if ($i % 2 -eq 0) { '#0987db' } else { 'dodgerblue' }
           }
 
-          # 6) Build QuickChart payload (cumulative style)
+          # 6) Build QuickChart payload (cumulative style) with datalabels inside bars and rotated vertically
           $cfg = @{
             type = 'bar'
             data = @{
@@ -68,21 +76,30 @@ jobs:
                 datalabels = @{
                   display = $true
                   color   = 'white'
-                  anchor  = 'end'
-                  align   = 'top'
-                  font    = @{ size = 7 }
-                  offset  = -4
+                  anchor  = 'center'
+                  align   = 'center'
+                  rotation = -90
+                  clamp   = $true
+                  font    = @{ size = 8; weight = 'bold' }
+                  offset  = 0
+                  padding = @{ top = 2; bottom = 2; left = 2; right = 2 }
+                  formatter = 'function(value, ctx) { return value; }'
                 }
               }
               title  = @{ display = $true; text = 'New Players — Last 30 Days'; fontColor = 'red' }
               legend = @{ display = $false }
               scales = @{
-                x = @{ ticks = @{ autoSkip    = $false; maxRotation = 45; minRotation = 45 } }
-                y = @{ ticks = @{ beginAtZero = $true } }
+                x = @{
+                  ticks = @{ autoSkip = $false; maxRotation = 45; minRotation = 45; font = @{ size = 8 } }
+                }
+                y = @{
+                  beginAtZero = $true
+                  ticks = @{ font = @{ size = 8 } }
+                }
               }
-              layout = @{ padding = @{ top = 40; left = 10 } }
+              layout = @{ padding = @{ top = 40; left = 10; right = 10; bottom = 10 } }
             }
-          } | ConvertTo-Json -Depth 10 -Compress
+          } | ConvertTo-Json -Depth 12 -Compress
 
           # 7) Fetch chart PNG
           $url = "https://quickchart.io/chart?c=" + [uri]::EscapeDataString($cfg)
