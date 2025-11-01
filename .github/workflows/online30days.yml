@@ -70,7 +70,7 @@ jobs:
                   color   = 'white'
                   anchor  = 'end'
                   align   = 'top'
-                  font    = @{ size = 16; weight = 'bold' }
+                  font    = @{ size = 9; weight = 'bold' }
                   offset  = -4
                 }
               }
