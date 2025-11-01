@@ -34,7 +34,7 @@ jobs:
             if ($i % 2 -eq 0) { '#39c449' } else { '#1ba82b' }
           }
 
-          # 4) Build QuickChart config with alternating bar colors
+          # 4) Build QuickChart config with datalabels rotated -90 and centered inside bars
           $cfg = @{
             type = 'bar'
             data = @{
@@ -52,18 +52,29 @@ jobs:
                 datalabels = @{
                   display = $true
                   color   = 'white'
-                  anchor  = 'end'
-                  align   = 'top'
-                  font    = @{ size = 9 }
-                  offset  = -4
+                  anchor  = 'center'
+                  align   = 'center'
+                  rotation = -90
+                  clamp   = $true
+                  font    = @{ size = 10; weight = 'bold' }
+                  offset  = 0
+                  padding = @{ top = 2; bottom = 2; left = 2; right = 2 }
+                  formatter = 'function(value, ctx) { return value; }'
                 }
               }
               title  = @{ display = $true; text = 'Online Players — Last 24 Hours'; fontColor = 'red' }
               legend = @{ display = $false }
-              scales = @{ x = @{ ticks = @{ maxRotation = 90; minRotation = 90 } } }
+              scales = @{
+                x = @{
+                  ticks = @{ maxRotation = 90; minRotation = 90 }
+                }
+                y = @{
+                  beginAtZero = $true
+                }
+              }
               layout = @{ padding = @{ top = 40; left = 10 } }
             }
-          } | ConvertTo-Json -Depth 10 -Compress
+          } | ConvertTo-Json -Depth 12 -Compress
 
           # 5) URL-encode and fetch the chart
           $encoded  = [Uri]::EscapeDataString($cfg)
