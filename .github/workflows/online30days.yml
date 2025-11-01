@@ -20,21 +20,36 @@ jobs:
           $html = (Invoke-WebRequest 'https://www.playgenerals.online/servicestats' `
                    -UseBasicParsing -ErrorAction Stop).Content
 
-          # 2) Extract the 30-day players & labels arrays
+          # 2) Extract the 30-day players & labels arrays (robust parsing)
           $playersRaw = ($html -split 'player_stats_30d_data_players = \[')[1] `
                         -split '\];' | Select-Object -First 1
           $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] `
                         -split '\];' | Select-Object -First 1
 
-          $players = $playersRaw -split ',' | ForEach-Object { [int]($_.Trim('"')) }
-          $labels  = $labelsRaw  -split ',' | ForEach-Object { $_.Trim('"') }
+          # Split, trim quotes/whitespace, filter empties, convert players to int
+          $players = $playersRaw -split ',' |
+                     ForEach-Object { ($_ -replace '"','').Trim() } |
+                     Where-Object { $_ -ne '' } |
+                     ForEach-Object { [int]$_ }
 
-          # 3) Build alternating cyan shades array
+          $labels = $labelsRaw -split ',' |
+                    ForEach-Object { ($_ -replace '"','').Trim() } |
+                    Where-Object { $_ -ne '' }
+
+          # Ensure both arrays are the same length (truncate any extra trailing item)
+          $count = [Math]::Min($players.Count, $labels.Count)
+          if ($players.Count -ne $labels.Count) {
+            Write-Host "Warning: players count ($($players.Count)) and labels count ($($labels.Count)) differ. Truncating to $count."
+            $players = $players[0..($count - 1)]
+            $labels  = $labels[0..($count - 1)]
+          }
+
+          # 3) Build alternating color array
           $colors = for ($i = 0; $i -lt $players.Count; $i++) {
             if ($i % 2 -eq 0) { '#bdba33' } else { '#dedb2a' }
           }
 
-          # 4) Build QuickChart JSON payload with alternating bar colors
+          # 4) Build QuickChart JSON payload with datalabels inside vertical
           $cfg = @{
             type = 'bar'
             data = @{
@@ -52,10 +67,14 @@ jobs:
                 datalabels = @{
                   display = $true
                   color   = 'white'
-                  anchor  = 'end'
-                  align   = 'top'
-                  font    = @{ size = 9 }
-                  offset  = -4
+                  anchor  = 'center'
+                  align   = 'center'
+                  rotation = -90
+                  clamp   = $true
+                  font    = @{ size = 9; weight = 'bold' }
+                  offset  = 0
+                  padding = @{ top = 2; bottom = 2; left = 2; right = 2 }
+                  formatter = 'function(value, ctx) { return value; }'
                 }
               }
               title  = @{ display = $true; text = 'Online Players — Last 30 Days'; fontColor = 'red' }
@@ -70,14 +89,13 @@ jobs:
                   }
                 }
                 y = @{
-                  ticks = @{
-                    font = @{ size = 8 }
-                  }
+                  beginAtZero = $true
+                  ticks = @{ font = @{ size = 8 } }
                 }
               }
-              layout = @{ padding = @{ top = 40; left = 10 } }
+              layout = @{ padding = @{ top = 40; left = 10; right = 10; bottom = 10 } }
             }
-          } | ConvertTo-Json -Depth 10 -Compress
+          } | ConvertTo-Json -Depth 12 -Compress
 
           # 5) URL-encode and download the chart PNG
           $chartUrl = "https://quickchart.io/chart?c=" + [Uri]::EscapeDataString($cfg)
