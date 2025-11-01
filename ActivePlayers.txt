@@ -530,3 +530,9 @@ bots.
 Banch
 Ehlers_DK
 BadG
+MOD
+Never
+HL:3
+MaleGod
+Giperion
+colonist
