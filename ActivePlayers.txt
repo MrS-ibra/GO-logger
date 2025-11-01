@@ -2473,3 +2473,7 @@ Mon.gn
 MoodyAmor
 BlitzX
 taarkm20
+njahjmal.tl
+&Ecirc;&sbquo;&AElig;&circ;&AElig;&iexcl;&agrave;&frac12;ž&acirc;&bdquo;&tilde;&Auml;&plusmn;&AElig;&iexcl;
+JackDaw
+LuckySevens
