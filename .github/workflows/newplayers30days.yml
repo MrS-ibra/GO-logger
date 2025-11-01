@@ -45,7 +45,7 @@ jobs:
             $running
           }
 
-          # 4b) Safety: ensure labels and data same length (truncate if needed)
+          # Safety: ensure labels and data same length (truncate if needed) to avoid missing/clipped column
           $count = [Math]::Min($labels.Count, $data.Count)
           if ($labels.Count -ne $data.Count) {
             Write-Host "Warning: labels ($($labels.Count)) and data ($($data.Count)) differ. Truncating to $count."
@@ -58,7 +58,7 @@ jobs:
             if ($i % 2 -eq 0) { '#0987db' } else { 'dodgerblue' }
           }
 
-          # 6) Build QuickChart payload (cumulative style) with datalabels inside bars and rotated vertically
+          # 6) Build QuickChart payload with datalabels inside bars (vertical) and chart sizing to avoid clipping
           $cfg = @{
             type = 'bar'
             data = @{
@@ -72,6 +72,7 @@ jobs:
               })
             }
             options = @{
+              responsive = $false
               plugins = @{
                 datalabels = @{
                   display = $true
@@ -97,12 +98,15 @@ jobs:
                   ticks = @{ font = @{ size = 8 } }
                 }
               }
-              layout = @{ padding = @{ top = 40; left = 10; right = 10; bottom = 10 } }
+              layout = @{ padding = @{ top = 40; left = 10; right = 30; bottom = 10 } }
             }
           } | ConvertTo-Json -Depth 12 -Compress
 
-          # 7) Fetch chart PNG
-          $url = "https://quickchart.io/chart?c=" + [uri]::EscapeDataString($cfg)
+          # 7) Fetch chart PNG (explicit width/height to prevent clipping of final column)
+          $width = 1400
+          $height = 600
+          $url = "https://quickchart.io/chart?c=" + [uri]::EscapeDataString($cfg) + "&w=$width&h=$height"
+          Write-Host "Chart URL: $url"
           Invoke-WebRequest -Uri $url -OutFile NewPlayers30DayChart.png -ErrorAction Stop
 
           # 8) Overlay logo
