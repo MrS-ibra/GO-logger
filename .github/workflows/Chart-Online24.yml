@@ -20,21 +20,35 @@ jobs:
           $statsUrl = 'https://www.playgenerals.online/servicestats'
           $html     = (Invoke-WebRequest -Uri $statsUrl -UseBasicParsing -ErrorAction Stop).Content
 
-          # 2) Extract the 24-hour players & labels arrays
+          # 2) Extract the 24-hour players & labels arrays (robust parsing)
           $playersRaw = ($html -split 'player_stats_24h_data_players = \[')[1] `
                         -split '\];' | Select-Object -First 1
           $labelsRaw  = ($html -split 'data_24h_labels = \[')[1] `
                         -split '\];' | Select-Object -First 1
 
-          $players = $playersRaw -split ',' | ForEach-Object { [int]($_ -replace '"','').Trim() }
-          $labels  = $labelsRaw  -split ',' | ForEach-Object { ($_ -replace '"','').Trim() }
+          $players = $playersRaw -split ',' |
+                     ForEach-Object { ($_ -replace '"','').Trim() } |
+                     Where-Object { $_ -ne '' } |
+                     ForEach-Object { [int]$_ }
+
+          $labels = $labelsRaw -split ',' |
+                    ForEach-Object { ($_ -replace '"','').Trim() } |
+                    Where-Object { $_ -ne '' }
+
+          # Ensure both arrays are same length (truncate longer one) to avoid missing/clipped final column
+          $count = [Math]::Min($players.Count, $labels.Count)
+          if ($players.Count -ne $labels.Count) {
+            Write-Host "Warning: players count ($($players.Count)) and labels count ($($labels.Count)) differ. Truncating to $count."
+            $players = $players[0..($count - 1)]
+            $labels  = $labels[0..($count - 1)]
+          }
 
           # 3) Build alternating color array (limegreen, forestgreen, …)
           $colors = for ($i = 0; $i -lt $players.Count; $i++) {
             if ($i % 2 -eq 0) { '#39c449' } else { '#1ba82b' }
           }
 
-          # 4) Build QuickChart config with datalabels rotated -90 and centered inside bars
+          # 4) Build QuickChart config with alternating bar colors, white labels above bars, explicit sizing and padding
           $cfg = @{
             type = 'bar'
             data = @{
@@ -48,17 +62,17 @@ jobs:
               })
             }
             options = @{
+              responsive = $false
               plugins = @{
                 datalabels = @{
                   display = $true
                   color   = 'white'
-                  anchor  = 'center'
-                  align   = 'center'
-                  rotation = -90
-                  clamp   = $true
-                  font    = @{ size = 10; weight = 'bold' }
-                  offset  = 0
-                  padding = @{ top = 2; bottom = 2; left = 2; right = 2 }
+                  anchor  = 'end'
+                  align   = 'top'
+                  rotation = 0
+                  clamp   = $false
+                  font    = @{ size = 9; weight = 'bold' }
+                  offset  = -6
                   formatter = 'function(value, ctx) { return value; }'
                 }
               }
@@ -66,19 +80,27 @@ jobs:
               legend = @{ display = $false }
               scales = @{
                 x = @{
-                  ticks = @{ maxRotation = 90; minRotation = 90 }
+                  ticks = @{
+                    maxRotation = 90
+                    minRotation = 90
+                    autoSkip    = $false
+                    font        = @{ size = 8 }
+                  }
                 }
                 y = @{
                   beginAtZero = $true
+                  ticks = @{ font = @{ size = 8 } }
                 }
               }
-              layout = @{ padding = @{ top = 40; left = 10 } }
+              layout = @{ padding = @{ top = 48; left = 10; right = 30; bottom = 10 } }
             }
           } | ConvertTo-Json -Depth 12 -Compress
 
-          # 5) URL-encode and fetch the chart
+          # 5) URL-encode and fetch the chart PNG (explicit width/height to avoid clipping final column)
           $encoded  = [Uri]::EscapeDataString($cfg)
-          $chartUrl = "https://quickchart.io/chart?c=$encoded"
+          $width = 1400
+          $height = 600
+          $chartUrl = "https://quickchart.io/chart?c=$encoded&w=$width&h=$height"
           Write-Host "Chart URL: $chartUrl"
           Invoke-WebRequest -Uri $chartUrl -OutFile OnlineChart.png -ErrorAction Stop
 
