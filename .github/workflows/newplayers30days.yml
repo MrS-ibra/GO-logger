@@ -86,7 +86,7 @@ jobs:
                   formatter = 'function(value, ctx) { return value; }'
                 }
               }
-              title  = @{ display = $true; text = 'New Players — Last 30 Days'; fontColor = 'red'; fontSize: '30'}
+              title  = @{ display = $true; text = 'New Players — Last 30 Days'; fontColor = 'red'; fontSize = '30'}
               legend = @{ display = $false }
               scales = @{
                 x = @{
