@@ -108,7 +108,7 @@ jobs:
                   offset  = -4
                 }
               }
-              title  = @{ display = $true; text = 'Online Players — Last 30 Days'; fontColor = 'red'; fontSize = '30' }
+              title  = @{ display = $true; text = 'Online Players — Last 30 Days'; fontColor = 'red'; fontSize = '24' }
               legend = @{ display = $false }
               scales = @{
                 x = @{
