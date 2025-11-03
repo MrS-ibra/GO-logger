@@ -116,11 +116,11 @@ jobs:
                     maxRotation = 90
                     minRotation = 90
                     autoSkip    = $false
-                    font        = @{ size = 20 }
+                    font        = @{ size = 8 }
                   }
                 }
                 y = @{
-                  ticks = @{ font = @{ size = 20 } }
+                  ticks = @{ font = @{ size = 8 } }
                 }
               }
               layout = @{ padding = @{ top = 40; left = 10; right = 30 } }
