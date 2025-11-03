@@ -26,13 +26,13 @@ jobs:
           $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] `
                         -split '\];' | Select-Object -First 1
 
-          # Robust split + trim + filter empty entries
+          # split + trim + filter empty entries
           $players = $playersRaw -split ',' |
                      ForEach-Object { ($_ -replace '"','').Trim() } |
                      Where-Object { $_ -ne '' } |
                      ForEach-Object { [int]$_ }
 
-          # Format labels to "oct 2", "oct 3" etc. (month then day) and keep all other behavior unchanged
+          # Format labels to "oct 2", "oct 3" etc. (month then day)
           $labels = $labelsRaw -split ',' |
                     ForEach-Object {
                       $tok = ($_ -replace '"','').Trim()
