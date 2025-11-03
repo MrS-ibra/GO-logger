@@ -113,7 +113,7 @@ jobs:
           $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source `
                  ?? (Get-Command convert -ErrorAction SilentlyContinue)?.Source
           if (-not $magick) { throw "ImageMagick not found on PATH." }
-          & $magick NewPlayers30DayChart.png logo.png -gravity north -geometry 260x260+10+10 -composite NewPlayers30DayChart.png
+          & $magick NewPlayers30DayChart.png logo.png -gravity north -geometry 550x550+10+10 -composite NewPlayers30DayChart.png
 
           # 9) Post to Discord
           Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK -Method Post -Form @{
