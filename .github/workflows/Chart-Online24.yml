@@ -109,7 +109,7 @@ jobs:
           $magick = (Get-Command magick -ErrorAction SilentlyContinue)?.Source
           if (-not $magick) { $magick = (Get-Command convert -ErrorAction SilentlyContinue)?.Source }
           if (-not $magick) { throw "ImageMagick not found" }
-          & $magick OnlineChart.png logo.png -gravity north -geometry 400x400+10+10 -composite OnlineChart.png
+          & $magick OnlineChart.png logo.png -gravity north -geometry 550x550+10+10 -composite OnlineChart.png
 
           # 7) Post to Discord
           Invoke-RestMethod -Uri $env:DISCORD_WEBHOOK -Method Post -Form @{
