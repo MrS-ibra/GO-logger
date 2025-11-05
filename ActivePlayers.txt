@@ -5004,3 +5004,5 @@ MR X {LEB}
 ! 𝓐𝓶𝓻𝓸𝓷 | 𝓪
 ZENO
 EXTRA2
+conqueror
+Sniper1
