@@ -5400,3 +5400,5 @@ bl9rTV
 &Atilde;&brvbar;&Acirc;&frac14;&Acirc;&iquest;&Acirc;&plusmn;&Acirc;&permil;&Acirc;&reg;&Acirc;&fnof;&Acirc;&frac34;&Acirc;&euro;&Acirc;&euro;
 [RDR]&Atilde;&cent;&acirc;&sbquo;&not;&acirc;&bdquo;&cent;eFe
 ali.zidanes1997
+!  &Atilde;&deg;&Acirc;&Acirc;&acirc;&sbquo;&not;&Atilde;&deg;&Acirc;&Acirc;&acirc;&euro;&ordm;&Atilde;&deg;&Acirc;&Acirc;&Acirc;&uml; &Atilde;&deg;
+Mc غزاوي
