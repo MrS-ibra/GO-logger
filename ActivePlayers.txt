@@ -6311,3 +6311,6 @@ M.Bareo
 [GTFO] Turklife
 hafudr80
 anemozza
+[GTFO] TQLA
+ECO-8
+ECO-7
