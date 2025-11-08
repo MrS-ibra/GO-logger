@@ -6511,3 +6511,5 @@ targayrab
 biba2
 biba
 huskha
+&atilde;&sbquo;&acute;&atilde;&fnof;&fnof;&atilde;&fnof;&permil;&atilde;&sbquo;&shy;&atilde;&fnof;&copy;&atilde;&fnof;&frac14;&aring;&scaron;&aring;&pound;&laquo;
+Peace_be
