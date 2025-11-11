@@ -7576,3 +7576,5 @@ gladiator etsh
 Smooth
 Jayyab
 chaos
+THE_GENERAL
+El_barbary
