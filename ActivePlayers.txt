@@ -7840,3 +7840,12 @@ mri3
 Tristan9
 JO MadarA
 moshtak
+NikitOS
+Omar Qasem
+&ETH;&iquest;&Ntilde;&euro;&Ntilde;&ETH;&frac14;&ETH;&frac34;&Ntilde;&sbquo;&ETH;&frac34;&ETH;&scaron;_
+NextlvlAD_M1
+NextlvlAD_M2
+NEmR
+LeFou
+zekariyer
+&Oslash;&micro;&Ugrave;&bdquo;&Oslash;&sect;&Oslash;&shy;
