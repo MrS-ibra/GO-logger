@@ -7664,3 +7664,5 @@ crr7
 hik02
 abo1
 eha
+Hamode9801
+x64
