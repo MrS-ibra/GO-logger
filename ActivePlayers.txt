@@ -7970,3 +7970,6 @@ test_tao
 al3bsy
 JaKie^
 SHAMOO
+&ccedil;&circ;&para; VIP &atilde;&fnof;&raquo;  J&Ograve;&permil;O&Ograve;&permil;K&Ograve;&permil;E&Ograve;&permil;R
+baselstar
+aburawad008
