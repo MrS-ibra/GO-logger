@@ -11,7 +11,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Generate 30-Day New-Players per Day chart
+      - name: Generate 30-Day Cumulative New-Players chart
         shell: pwsh
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -35,11 +35,15 @@ jobs:
           $daily = foreach ($d in $dates) {
             $prev = $entries | Where-Object Date -eq $d.AddDays(-1) | Select-Object -Last 1
             $curr = $entries | Where-Object Date -eq $d            | Select-Object -Last 1
-            if ($prev -and $curr) { [int]($curr.Total - $prev.Total) } else { 0 }
+            if ($prev -and $curr) { $curr.Total - $prev.Total } else { 0 }
           }
 
-          # 4) Use per-day values directly (no cumulative)
-          $data = $daily
+          # 4) Turn daily into running cumulative total
+          $running = 0
+          $data = foreach ($x in $daily) {
+            $running += $x
+            $running
+          }
 
           # Safety: ensure labels and data same length (truncate if needed) to avoid missing/clipped column
           $count = [Math]::Min($labels.Count, $data.Count)
@@ -54,13 +58,13 @@ jobs:
             if ($i % 2 -eq 0) { '#0987db' } else { 'dodgerblue' }
           }
 
-          # 6) Build QuickChart payload with datalabels above each bar and sizing to avoid clipping
+          # 6) Build QuickChart payload with datalabels above each bar (white) and sizing to avoid clipping
           $cfg = @{
             type = 'bar'
             data = @{
               labels   = $labels
               datasets = @(@{
-                label           = 'New Players - last 30 days'
+                label           = 'Cumulative New Players'
                 data            = $data
                 backgroundColor = $colors
                 borderColor     = $colors
@@ -82,7 +86,7 @@ jobs:
                   formatter = 'function(value, ctx) { return value; }'
                 }
               }
-              title  = @{ display = $true; text = 'New Players — Last 30 Days'; fontColor = 'red'; fontSize = '24'}
+              title  = @{ display = $true; text = 'New Players - Last 30 Days'; fontColor = 'red'; fontSize = '24'}
               legend = @{ display = $false }
               scales = @{
                 x = @{
@@ -117,4 +121,4 @@ jobs:
             file         = Get-Item NewPlayers30DayChart.png
           }
 
-          Write-Host "✅ Posted daily new-players chart for last 30 days."
+          Write-Host "✅ Posted cumulative new-players chart for last 30 days."
