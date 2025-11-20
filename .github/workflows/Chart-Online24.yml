@@ -1,4 +1,4 @@
-name: Chart - Online Players — Last 24 Hours
+name: Chart - Online Players Last 24 Hours
 
 on:
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
                   formatter = 'function(value, ctx) { return value; }'
                 }
               }
-              title  = @{ display = $true; text = 'Online Players — Last 24 Hours'; fontColor = 'red'; fontSize = '24' }
+              title  = @{ display = $true; text = 'Online Players ( Last 24 Hours )'; fontColor = 'red'; fontSize = '24' }
               legend = @{ display = $false }
               scales = @{
                 x = @{
