@@ -89,7 +89,7 @@ try {
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢"
     $line3    = "🆕** +$joinedToday **joined today"
-    $line4    = $peakLine
+   # $line4    = $peakLine
 
     # 9) Write output file
     $logPath = 'NewStats.txt'
