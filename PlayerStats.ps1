@@ -10,28 +10,17 @@ try {
         $online = 0
     }
 
-    # 2) Fetch 24-hour stats JS block and parse arrays
+    # 2) Fetch service stats HTML and parse peak concurrent players
     $statsUrl  = 'https://www.playgenerals.online/servicestats'
     $statsHtml = (Invoke-WebRequest -Uri $statsUrl -UseBasicParsing -ErrorAction Stop).Content
 
-    $playersRaw = ($statsHtml -split 'player_stats_24h_data_players = \[')[1] `
-                  -split '\];' | Select-Object -First 1
-    $labelsRaw  = ($statsHtml -split 'data_24h_labels = \[')[1] `
-                  -split '\];' | Select-Object -First 1
-
-    $playersArr = $playersRaw -split ',' | ForEach-Object { [int]($_.Trim('"')) }
-    $labelsArr  = $labelsRaw  -split ',' | ForEach-Object { $_.Trim('"') }
-
-    # 3) Compute today's peak from the parsed arrays
-    $peakCount = ($playersArr | Measure-Object -Maximum).Maximum
-    for ($i = 0; $i -lt $playersArr.Count; $i++) {
-        if ($playersArr[$i] -eq $peakCount) {
-            $peakIndex = $i
-            break
-        }
+    if ($statsHtml -match 'Peak Concurrent Players:\s*(\d+)') {
+        $peakCount = [int]$matches[1]
+    } else {
+        $peakCount = 0
     }
-    $peakTime = $labelsArr[$peakIndex]
-    $peakLine = "📈 Peak ** $peakTime ** (GMT) — ** $peakCount ** players"
+
+    $peakLine = "📈 Peak: ** $peakCount ** players - last 24 hours"
 
     # 4) Append this run to history for join-today calculation
     $peakLog = 'StatsHistory.txt'
@@ -89,7 +78,7 @@ try {
     $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
     $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢"
     $line3    = "🆕** +$joinedToday **joined today"
-   # $line4    = $peakLine
+    $line4    = $peakLine
 
     # 9) Write output file
     $logPath = 'NewStats.txt'
