@@ -1,41 +1,44 @@
 try {
-    # 1) Fetch players page (for online count + lobbies + VIP list)
+    # 1) Fetch players page (everything we need is here)
     $url  = 'https://www.playgenerals.online/players'
     $html = (Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop).Content
 
-    # Online players from main menu
+    # Online
     $online = 0
-    if ($html -match 'Players\s*<small><p[^>]*>(\d+)</p>') {
+    if ($html -match 'Online Now\s*\[(\d+)\]') {
         $online = [int]$matches[1]
     }
 
-    # Lobbies
-    $lobbies = 0
-    if ($html -match 'Lobbies\s*<small><p[^>]*>(\d+)</p>') {
-        $lobbies = [int]$matches[1]
-    }
-
-    # 2) Fetch service stats HTML and parse total users, peak concurrent, unique last 24h
-    $statsUrl  = 'https://www.playgenerals.online/servicestats'
-    $statsHtml = (Invoke-WebRequest -Uri $statsUrl -UseBasicParsing -ErrorAction Stop).Content
-
-    # Total Users
+    # Lifetime Stats: Total Users
     $count = 0
-    if ($statsHtml -match '(\d+)\s*<span>\s*Total Users\s*</span>') {
+    if ($html -match '(\d+)\s*<span>\s*Total Users\s*</span>') {
         $count = [int]$matches[1]
     }
 
-    # Peak Concurrent
+    # Lifetime Stats: Peak Concurrent
     $peakConcurrent = 0
-    if ($statsHtml -match '(\d+)\s*<span>\s*Peak Concurrent\s*</span>') {
+    if ($html -match '(\d+)\s*<span>\s*Peak Concurrent\s*</span>') {
         $peakConcurrent = [int]$matches[1]
     }
 
-    # Unique Players - Last 24 hours
+    # Unique Players: Last 24 hours
     $unique24 = 0
-    if ($statsHtml -match '(\d+)\s*<span>\s*Last 24 hours\s*</span>') {
+    if ($html -match '(\d+)\s*<span>\s*Last 24 hours\s*</span>') {
         $unique24 = [int]$matches[1]
     }
+
+    # Online Now breakdown: Quickmatch + Custom = active games
+    $quickmatch = 0
+    if ($html -match '(\d+)\s*<span>\s*Quickmatch\s*</span>') {
+        $quickmatch = [int]$matches[1]
+    }
+
+    $custom = 0
+    if ($html -match '(\d+)\s*<span>\s*Custom\s*</span>') {
+        $custom = [int]$matches[1]
+    }
+
+    $activeGames = $quickmatch + $custom
 
     # Peak line: concurrent peak + unique 24h
     $peakLine = "📈 Peak: ** $peakConcurrent ** concurrent — ** $unique24 ** unique (last 24 hours)"
@@ -92,7 +95,7 @@ try {
 
     # 8) Build Discord message lines
     $timeOnly = Get-Date -Format 'HH:mm'
-    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢 — ** $lobbies ** lobbies"
+    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢 — ** $activeGames ** in game"
     $line3    = "🆕** +$joinedToday **joined today"
     $line4    = $peakLine
 
