@@ -1,33 +1,50 @@
 try {
-    # 1) Fetch total lifetime players & current online
+    # 1) Fetch players page (for online count + lobbies + VIP list)
     $url  = 'https://www.playgenerals.online/players'
     $html = (Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop).Content
 
-    $count = (($html -split 'Total Lifetime Players:')[1] -split '<')[0] -replace '\D', ''
-    if ($html -match 'There are (\d+) online player') {
+    # Online players from main menu
+    $online = 0
+    if ($html -match 'Players\s*<small><p[^>]*>(\d+)</p>') {
         $online = [int]$matches[1]
-    } else {
-        $online = 0
     }
 
-    # 2) Fetch service stats HTML and parse peak concurrent players
+    # Lobbies
+    $lobbies = 0
+    if ($html -match 'Lobbies\s*<small><p[^>]*>(\d+)</p>') {
+        $lobbies = [int]$matches[1]
+    }
+
+    # 2) Fetch service stats HTML and parse total users, peak concurrent, unique last 24h
     $statsUrl  = 'https://www.playgenerals.online/servicestats'
     $statsHtml = (Invoke-WebRequest -Uri $statsUrl -UseBasicParsing -ErrorAction Stop).Content
 
-    if ($statsHtml -match 'Peak Concurrent Players:\s*(\d+)') {
-        $peakCount = [int]$matches[1]
-    } else {
-        $peakCount = 0
+    # Total Users
+    $count = 0
+    if ($statsHtml -match '(\d+)\s*<span>\s*Total Users\s*</span>') {
+        $count = [int]$matches[1]
     }
 
-    $peakLine = "📈 Peak: ** $peakCount ** players - last 24 hours"
+    # Peak Concurrent
+    $peakConcurrent = 0
+    if ($statsHtml -match '(\d+)\s*<span>\s*Peak Concurrent\s*</span>') {
+        $peakConcurrent = [int]$matches[1]
+    }
 
-    # 4) Append this run to history for join-today calculation
+    # Unique Players - Last 24 hours
+    $unique24 = 0
+    if ($statsHtml -match '(\d+)\s*<span>\s*Last 24 hours\s*</span>') {
+        $unique24 = [int]$matches[1]
+    }
+
+    # Peak line: concurrent peak + unique 24h
+    $peakLine = "📈 Peak: ** $peakConcurrent ** concurrent — ** $unique24 ** unique (last 24 hours)"
+
+    # 4) Append this run to history for join-today calculation (based on total users)
     $peakLog = 'StatsHistory.txt'
     if (Test-Path $peakLog) {
         $all = Get-Content $peakLog
         if ($all.Count -ge 4000) {
-            # keep only most recent 3990 lines
             Set-Content $peakLog $all[10..($all.Count - 1)]
         }
     }
@@ -54,7 +71,7 @@ try {
               elseif ([int]$count -lt $prevCount) { ' 🔻' }
               else { '' }
 
-    # 7) VIP detection
+    # 7) VIP detection with new HTML structure
     $vipMessages = @{
         'Kill toll^'   = '🚨 Kill toll is online!'
         '-DoMiNaToR-'  = '🚨 Domi is online!'
@@ -63,8 +80,8 @@ try {
     }
     $vipPriority = @('-DoMiNaToR-', 'Legi', 'Kill toll^', 'DrGoldFish')
 
-    $playerNames = [regex]::Matches($html, "<th\s+scope=['""]row['""]>(.*?)</th>") |
-                   ForEach-Object { $_.Groups[1].Value }
+    $playerNames = [regex]::Matches($html, "<th>\s*<span class=['""]lbl['""]>Player name</span>\s*(.*?)\s*</th>") |
+                   ForEach-Object { $_.Groups[1].Value.Trim() }
 
     $vipOnline = @()
     foreach ($vip in $vipMessages.Keys) {
@@ -75,8 +92,7 @@ try {
 
     # 8) Build Discord message lines
     $timeOnly = Get-Date -Format 'HH:mm'
-    $line1    = "**━━━━━━━Time (GMT): $timeOnly━━━━━━━**"
-    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢"
+    $line2    = "👥** $count ** total$marker — ** $online ** Online 🟢 — ** $lobbies ** lobbies"
     $line3    = "🆕** +$joinedToday **joined today"
     $line4    = $peakLine
 
