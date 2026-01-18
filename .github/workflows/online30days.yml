@@ -20,11 +20,20 @@ jobs:
           $html = (Invoke-WebRequest 'https://www.playgenerals.online/servicestats' `
                    -UseBasicParsing -ErrorAction Stop).Content
 
-          # 2) Extract the 30-day players & labels arrays
-          $playersRaw = ($html -split 'player_stats_30d_data_players = \[')[1] `
-                        -split '\];' | Select-Object -First 1
-          $labelsRaw  = ($html -split 'data_30d_labels = \[')[1] `
-                        -split '\];' | Select-Object -First 1
+          # 2) Extract the 30-day players & labels arrays via regex
+          $playersRaw = $null
+          if ($html -match 'player_stats_30d_data_players\s*=\s*\[([^\]]*)\]') {
+            $playersRaw = $matches[1]
+          } else {
+            throw "Could not find player_stats_30d_data_players array in HTML."
+          }
+
+          $labelsRaw = $null
+          if ($html -match 'data_30d_labels\s*=\s*\[([^\]]*)\]') {
+            $labelsRaw = $matches[1]
+          } else {
+            throw "Could not find data_30d_labels array in HTML."
+          }
 
           # split + trim + filter empty entries
           $players = $playersRaw -split ',' |
@@ -41,17 +50,14 @@ jobs:
                       # remove ordinal suffixes (1st, 2nd, 3rd, 4th...)
                       $clean = $tok -replace '(\d+)(st|nd|rd|th)', '$1'
 
-                      # Try parsing directly
                       try {
                         $dt = [datetime]::Parse($clean)
                         $dt.ToString('MMM d').ToLower()
                       } catch {
-                        # Try adding current year if needed and parse
                         try {
                           $dt = [datetime]::Parse("$clean $(Get-Date).Year")
                           $dt.ToString('MMM d').ToLower()
                         } catch {
-                          # If input is "2 Oct" or "2 Oct," swap to "Oct 2"
                           if ($clean -match '^\s*\d{1,2}\s+\w+') {
                             $parts = $clean -split '\s+'
                             if ($parts.Count -ge 2) {
@@ -70,7 +76,7 @@ jobs:
                     } |
                     Where-Object { $_ -ne $null -and $_ -ne '' }
 
-          # Ensure arrays match length (truncate longer one) to avoid missing/clipped column
+          # Ensure arrays match length (truncate longer one)
           $count = [Math]::Min($players.Count, $labels.Count)
           if ($players.Count -ne $labels.Count) {
             Write-Host "Warning: players count ($($players.Count)) and labels count ($($labels.Count)) differ. Truncating to $count."
@@ -78,12 +84,12 @@ jobs:
             $labels  = $labels[0..($count - 1)]
           }
 
-          # 3) Build alternating cyan shades array
+          # 3) Build alternating colors
           $colors = for ($i = 0; $i -lt $players.Count; $i++) {
             if ($i % 2 -eq 0) { '#bdba33' } else { '#dedb2a' }
           }
 
-          # 4) Build QuickChart JSON payload with alternating bar colors
+          # 4) Build QuickChart JSON payload
           $cfg = @{
             type = 'bar'
             data = @{
@@ -127,7 +133,7 @@ jobs:
             }
           } | ConvertTo-Json -Depth 12 -Compress
 
-          # 5) URL-encode and download the chart PNG (set explicit width/height to avoid clipping)
+          # 5) URL-encode and download the chart PNG
           $encoded = [Uri]::EscapeDataString($cfg)
           $width = 1400
           $height = 600
