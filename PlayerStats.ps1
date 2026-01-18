@@ -41,7 +41,7 @@ try {
     $activeGames = $quickmatch + $custom
 
     # Peak line: concurrent peak + unique 24h
-    $peakLine = "📈 Peak: ** $peakConcurrent ** concurrent — ** $unique24 ** unique (last 24 hours)"
+    $peakLine = "📈 Peak: ** $peakConcurrent ** — ** $unique24 ** unique (last 24h)"
 
     # 4) Append this run to history for join-today calculation (based on total users)
     $peakLog = 'StatsHistory.txt'
