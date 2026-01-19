@@ -95,7 +95,7 @@ try {
 
     # 8) Build Discord message lines
     $timeOnly = Get-Date -Format 'HH:mm'
-    $line2    = "👥** $count ** total$marker — ** +$joinedToday **joined today"
+    $line2    = "👥** $count ** total — ** +$joinedToday **joined today$marker"
     $line3    = "🟢 ** $online ** Online — ** $activeGames ** in active games"
     $line4    = $peakLine
 
