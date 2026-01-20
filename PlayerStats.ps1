@@ -71,17 +71,16 @@ try {
         [int]$count
     }
     $marker = if ([int]$count -gt $prevCount) { ' ↑' }
-              elseif ([int]$count -lt $prevCount) { ' 🔻' }
+              elseif ([int]$count -lt $prevCount) { ' ↓' }
               else { '' }
 
-    # 7) VIP detection with new HTML structure
+    # 7) VIP detection
     $vipMessages = @{
         'Kill toll^'   = '🚨 Kill toll is online!'
         '-DoMiNaToR-'  = '🚨 Domi is online!'
-        'Legi'         = '🚨 Legi is online!'
         'DrGoldFish'   = '🚨 DrGoldFish is online!'
     }
-    $vipPriority = @('-DoMiNaToR-', 'Legi', 'Kill toll^', 'DrGoldFish')
+    $vipPriority = @('-DoMiNaToR-', 'Kill toll^', 'DrGoldFish')
 
     $playerNames = [regex]::Matches($html, "<th>\s*<span class=['""]lbl['""]>Player name</span>\s*(.*?)\s*</th>") |
                    ForEach-Object { $_.Groups[1].Value.Trim() }
@@ -114,6 +113,6 @@ try {
     }
 
 } catch {
-    Set-Content 'NewStats.txt' "━━━━━━━━━━━━━━━━━━━━━━`n❌** Failed **: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
+    Set-Content 'NewStats.txt' "━━━━━━━━━━━━━━━━━━━━━━`n** Failed **: site unreachable or error occurred`n━━━━━━━━━━━━━━━━━━━━━━"
     exit 8
 }
