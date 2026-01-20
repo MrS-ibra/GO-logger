@@ -70,7 +70,7 @@ try {
     } else {
         [int]$count
     }
-    $marker = if ([int]$count -gt $prevCount) { ' ▲' }
+    $marker = if ([int]$count -gt $prevCount) { ' ↑' }
               elseif ([int]$count -lt $prevCount) { ' 🔻' }
               else { '' }
 
