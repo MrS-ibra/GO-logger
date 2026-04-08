@@ -1,5 +1,3 @@
-👥** 65001 ** total — ** +25 **joined today ↑
-🟢 ** 495 ** Online — ** 375 ** in active games
-📈 ** 1808 ** Peak — ** 7046 ** unique last 24h
-
-🚨 Kill toll is online!
+👥** 65001 ** total — ** +25 **joined today
+🟢 ** 448 ** Online — ** 338 ** in active games
+📈 ** 1808 ** Peak — ** 7039 ** unique last 24h
