@@ -76,11 +76,11 @@ try {
 
     # 7) VIP detection
     $vipMessages = @{
-        'Kill toll^'   = '🚨 Kill toll is online!'
+        'Legi'   = '🚨 Legi is online!'
         '-DoMiNaToR-'  = '🚨 Domi is online!'
         'DrGoldFish'   = '🚨 DrGoldFish is online!'
     }
-    $vipPriority = @('-DoMiNaToR-', 'Kill toll^', 'DrGoldFish')
+    $vipPriority = @('-DoMiNaToR-', 'Legi', 'DrGoldFish')
 
     $playerNames = [regex]::Matches($html, "<th>\s*<span class=['""]lbl['""]>Player name</span>\s*(.*?)\s*</th>") |
                    ForEach-Object { $_.Groups[1].Value.Trim() }
